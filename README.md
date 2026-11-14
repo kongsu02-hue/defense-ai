@@ -2,7 +2,7 @@
 
 AI 기초부터 국방 분야 활용, 윤리·보안, **AI 에이전트 실습**까지 다루는 교육 자료입니다.
 
-🌐 **웹사이트:** https://__OWNER__.github.io/__NAME__/
+🌐 **웹사이트:** https://kongsu02-hue.github.io/defense-ai/
 
 ## 구성
 
