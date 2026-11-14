@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>국방 AI 교육</title>
+<meta name="description" content="국방 AI 이해와 실습 — 강의자료와 브라우저 실습 시뮬레이터">
+<style>
+  :root {
+    --bg: #f6f7f4; --surface: #ffffff; --ink: #1c2420; --muted: #5d6a63;
+    --line: #dde2dc; --accent: #2f5d46; --accent-ink: #ffffff; --chip: #e8efe9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614; --surface: #1a201d; --ink: #e6ebe7; --muted: #9aa69f;
+      --line: #2c3530; --accent: #7fbf9a; --accent-ink: #0f1712; --chip: #23302a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.65 "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 64px 0 40px; border-bottom: 1px solid var(--line); }
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: 14px; letter-spacing: .04em; }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.2; margin: 8px 0 12px; letter-spacing: -.02em; }
+  header p { color: var(--muted); margin: 0; max-width: 620px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .btn {
+    display: inline-block; padding: 11px 18px; border-radius: 8px; text-decoration: none;
+    font-weight: 600; border: 1px solid var(--accent); color: var(--accent);
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn:hover { filter: brightness(1.08); }
+  section { padding: 44px 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 22px; margin: 0 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .card h3 { font-size: 16px; margin: 0 0 4px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .chip { display: inline-block; background: var(--chip); color: var(--accent); font-size: 12px;
+          font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; }
+  ol.outline { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px;
+               grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  ol.outline li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  ol.outline strong { display: block; margin-bottom: 4px; }
+  ol.outline span { color: var(--muted); font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface);
+          border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  th { color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  td a { color: var(--accent); font-weight: 600; }
+  footer { padding: 32px 0 56px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">1일 과정 · 6교시</div>
+      <h1>국방 AI 이해와 실습</h1>
+      <p>AI 기초부터 국방 적용 사례, 위험과 윤리까지 강의로 익히고, 설치 없이 브라우저에서 바로 실행되는 시뮬레이터로 직접 실습합니다.</p>
+      <div class="cta">
+        <a class="btn primary" href="simulator.html">실습 시뮬레이터 열기</a>
+        <a class="btn" href="materials/defense-ai-lecture.pptx" download>강의자료 받기 (PPTX)</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section>
+      <h2>강의 구성</h2>
+      <p class="lead">강의자료 23장, 네 개 단원으로 구성됩니다.</p>
+      <ol class="outline">
+        <li><strong>1. AI 기초</strong><span>AI·머신러닝·딥러닝의 관계, 세 가지 학습 방식, 개발·운용 생명주기</span></li>
+        <li><strong>2. 국방 AI 적용 분야</strong><span>감시정찰, 지휘결심 지원, 예측정비, 생성형 AI 활용과 성능 지표</span></li>
+        <li><strong>3. 위험·윤리·보안</strong><span>데이터 오염과 적대적 공격, 인간 통제의 세 수준, 책임 있는 AI 5대 원칙</span></li>
+        <li><strong>4. 실습</strong><span>브라우저 시뮬레이터로 4개 실습 진행</span></li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>실습 시뮬레이터</h2>
+      <p class="lead">탭을 바꿔 가며 진행합니다. <a href="simulator.html" style="color:var(--accent)">시뮬레이터 열기 →</a></p>
+      <div class="grid">
+        <div class="card"><span class="chip">실습 1 · 60분</span><h3>표적 탐지와 임계값</h3><p>임계값을 바꿔 정밀도·재현율과 오경보·미탐을 비교하고, 기상 악화 시 성능 변화를 관찰합니다.</p></div>
+        <div class="card"><span class="chip">실습 2 · 45분</span><h3>차량 예측정비</h3><p>모델을 학습시켜 고장 확률을 예측하고, 정비 슬롯을 배정해 30일 운용을 시뮬레이션합니다.</p></div>
+        <div class="card"><span class="chip">실습 3</span><h3>데이터 오염과 적대적 공격</h3><p>오염된 학습 데이터와 위장 패턴이 모델 판단을 어떻게 왜곡하는지 확인합니다.</p></div>
+        <div class="card"><span class="chip">실습 4</span><h3>AI 결심지원 시나리오</h3><p>가상 상황 6개에서 AI 추천과 근거를 보고 지휘관으로서 승인·보류·거부를 판단합니다.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>실습 데이터</h2>
+      <p class="lead">에이전트·데이터 분석 실습에 쓰는 JSON 파일입니다. 모두 교육용 가상 데이터이며 실제 부대·장비 정보와 무관합니다.</p>
+      <table>
+        <thead><tr><th>파일</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td><a href="agent-labs/data/inventory.json">inventory.json</a></td><td>대대별 보급품 재고, 일일 소모량, 안전 재고 일수</td></tr>
+          <tr><td><a href="agent-labs/data/vehicles.json">vehicles.json</a></td><td>차량 5대의 정비 후 주행거리, 엔진 온도, 진동, 최근 결함</td></tr>
+          <tr><td><a href="agent-labs/data/reports.json">reports.json</a></td><td>출처·신뢰도가 다른 관측 보고 4건</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="wrap">AI는 판단을 돕는 도구이며, 판단의 주체는 사람입니다. · 모든 실습 데이터는 교육용 가상 데이터입니다.</footer>
+</body>
+</html>

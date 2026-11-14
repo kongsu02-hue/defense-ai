@@ -1,0 +1,887 @@
+<title>국방 AI 실습 시뮬레이터</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: ops-console shell. Sticky tab rail on top, each lab = brief/controls column + instrument panel. */
+:root {
+  --bg: #f3f5f2; --panel: #ffffff; --panel-2: #e8ede8; --line: #d3dbd4;
+  --fg: #1a2420; --muted: #5a6b62; --accent: #c98c0c; --accent-ink: #1a2420; --accent-soft: #f6e7c4;
+  --olive: #3e6b52; --alert: #c0452f; --ok: #2f7d4f;
+  --font-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Malgun Gothic", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131a17; --panel: #1b2420; --panel-2: #232e29; --line: #33413a;
+  --fg: #e6ece8; --muted: #9db0a5; --accent: #e7ad35; --accent-ink: #1a2420; --accent-soft: #3a3220;
+  --olive: #7fb394; --alert: #ef7a62; --ok: #6cc28f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #131a17; --panel: #1b2420; --panel-2: #232e29; --line: #33413a;
+  --fg: #e6ece8; --muted: #9db0a5; --accent: #e7ad35; --accent-ink: #1a2420; --accent-soft: #3a3220;
+  --olive: #7fb394; --alert: #ef7a62; --ok: #6cc28f; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel) }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line) }
+.top-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding-block: 12px }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; margin-right: auto }
+.brand .reticle { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); display: grid; place-items: center }
+.brand small { font-weight: 400; color: var(--muted); font-size: 12px }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 10px }
+nav.tabs button { font: 500 14px var(--font-body); color: var(--muted); background: none; border: 1px solid transparent; border-radius: 6px; padding: 6px 12px; cursor: pointer; white-space: nowrap }
+nav.tabs button[aria-selected="true"] { color: var(--accent-ink); background: var(--accent); }
+nav.tabs button:hover:not([aria-selected="true"]) { border-color: var(--line); color: var(--fg) }
+.classif { font: 500 12px var(--font-body); color: var(--olive); border: 1px solid var(--olive); border-radius: 4px; padding: 2px 8px }
+
+main { padding-block: 20px 48px }
+section.lab { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 860px) { section.lab { grid-template-columns: minmax(0, 1fr) } }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0 }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0 }
+.box h2 { font-size: 18px; margin: 0 0 4px; text-wrap: balance }
+.box h3 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 500; letter-spacing: .04em }
+.brief { background: var(--panel-2); border-color: transparent }
+.brief ol { margin: 8px 0 0; padding-left: 20px; font-size: 14px }
+.brief ol li { margin-bottom: 4px }
+.brief p { margin: 0; font-size: 14px; color: var(--muted) }
+.lead { font-size: 14px; color: var(--muted); margin: 0 0 8px }
+
+label.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 14px; margin-bottom: 12px }
+label.ctl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent) }
+label.ctl output, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; cursor: pointer }
+.check input { accent-color: var(--accent); width: 16px; height: 16px }
+.btns { display: flex; flex-wrap: wrap; gap: 8px }
+button.b { font: 500 14px var(--font-body); padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer }
+button.b:hover { border-color: var(--muted) }
+button.b.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+button.b.ok { background: var(--ok); color: #fff; border-color: var(--ok) }
+button.b.alert { background: var(--alert); color: #fff; border-color: var(--alert) }
+button.b:disabled { opacity: .45; cursor: not-allowed }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+canvas { display: block; width: 100%; border-radius: 6px }
+.canvas-frame { position: relative; background: #24301f; border-radius: 6px; overflow: hidden }
+.hud { position: absolute; left: 10px; top: 8px; font: 500 11px var(--font-mono); color: #d9e6c8; letter-spacing: .06em; pointer-events: none; text-shadow: 0 1px 2px #000 }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); margin-top: 10px }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -2px; margin-right: 4px }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px }
+@media (max-width: 560px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+.stat { background: var(--panel-2); border-radius: 6px; padding: 10px 12px }
+.stat .k { font-size: 12px; color: var(--muted) }
+.stat .v { font: 500 22px var(--font-mono); font-variant-numeric: tabular-nums }
+.stat .s { font-size: 11px; color: var(--muted) }
+.stat.bad .v { color: var(--alert) } .stat.good .v { color: var(--ok) }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px }
+@media (max-width: 700px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+.tbl-wrap { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th { color: var(--muted); font-weight: 500; font-size: 12px }
+td.num, th.num { text-align: right; font-family: var(--font-mono) }
+.bar { height: 8px; border-radius: 4px; background: var(--panel-2); position: relative; min-width: 80px }
+.bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 4px }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--panel-2) }
+.pill.ok { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok) }
+.pill.bad { background: color-mix(in srgb, var(--alert) 20%, transparent); color: var(--alert) }
+.pill.warn { background: var(--accent-soft); color: var(--fg) }
+.note { font-size: 13px; color: var(--muted) }
+.callout { border-radius: 6px; padding: 12px 14px; background: var(--accent-soft); font-size: 14px }
+
+/* review panel */
+.review { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 14px; align-items: start }
+@media (max-width: 520px) { .review { grid-template-columns: minmax(0, 1fr) } }
+.review canvas { background: #1d2618; max-width: 200px }
+
+/* scenarios */
+.scn-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px }
+.scn h2 { font-size: 20px }
+.ai-rec { border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 12px; background: var(--panel-2) }
+.ai-rec .tag { font: 500 12px var(--font-body); color: var(--olive) }
+.ai-rec .act { font-size: 17px; font-weight: 700; margin: 4px 0 8px }
+.conf { display: flex; align-items: center; gap: 10px; font-size: 13px }
+.conf .bar { flex: 1 }
+ul.ev { margin: 10px 0 0; padding-left: 20px; font-size: 14px }
+.extra { margin-top: 12px; border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; font-size: 14px }
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px }
+@media (max-width: 560px) { .choices { grid-template-columns: minmax(0, 1fr) } }
+.choices button { text-align: left; padding: 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; font: 14px var(--font-body) }
+.choices button strong { display: block; font-size: 15px }
+.choices button:hover:not(:disabled) { border-color: var(--accent) }
+.choices button.picked { border-color: var(--accent); background: var(--accent-soft) }
+.choices button:disabled { cursor: default }
+.fb { margin-top: 14px; display: grid; gap: 8px }
+.fb div { font-size: 14px; padding: 10px 12px; border-radius: 6px; background: var(--panel-2) }
+.fb .best { outline: 2px solid var(--ok) }
+.progress { display: flex; gap: 6px }
+.progress span { width: 28px; height: 6px; border-radius: 3px; background: var(--line) }
+.progress span.done { background: var(--olive) } .progress span.cur { background: var(--accent) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <span class="reticle" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1a2420" stroke-width="1.8"><circle cx="8" cy="8" r="5"/><path d="M8 0v4M8 12v4M0 8h4M12 8h4"/></svg></span>
+        <span>국방 AI 실습 시뮬레이터 <small>교육용</small></span>
+      </div>
+      <span class="classif">가상 데이터 · 실제 부대·장비와 무관</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="실습 선택">
+      <button role="tab" id="t-lab1" aria-controls="lab1" aria-selected="true" data-tab="lab1">실습 1 표적 탐지</button>
+      <button role="tab" id="t-lab2" aria-controls="lab2" aria-selected="false" data-tab="lab2">실습 2 예측정비</button>
+      <button role="tab" id="t-lab3" aria-controls="lab3" aria-selected="false" data-tab="lab3">실습 3 데이터 오염</button>
+      <button role="tab" id="t-lab4" aria-controls="lab4" aria-selected="false" data-tab="lab4">실습 4 결심지원</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ================= LAB 1 ================= -->
+<section class="lab" id="lab1" role="tabpanel" aria-labelledby="t-lab1">
+  <div class="col">
+    <div class="box brief">
+      <h2>실습 1. 표적 탐지와 임계값</h2>
+      <p>AI가 정찰 영상에서 전차·장갑차를 찾고 신뢰도를 매깁니다. 임계값을 넘은 것만 '표적'으로 보고됩니다.</p>
+      <ol>
+        <li>임계값 0.50에서 정밀도·재현율을 기록하세요.</li>
+        <li>0.20과 0.80으로 바꿔 오경보·미탐 수를 비교하세요.</li>
+        <li>'기상 악화'를 켜고 같은 임계값에서 다시 측정하세요.</li>
+        <li>탐지 박스를 눌러 확대 영상을 보고 확인·기각하세요.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h3>AI 설정</h3>
+      <label class="ctl" for="l1-th">신뢰도 임계값 <output id="l1-th-o">0.50</output>
+        <input type="range" id="l1-th" min="0.05" max="0.95" step="0.05" value="0.5"></label>
+      <label class="check"><input type="checkbox" id="l1-weather"> 기상 악화 (안개·저조도)</label>
+      <label class="check"><input type="checkbox" id="l1-truth"> 정답 보기 (교관 확인용)</label>
+      <div class="btns" style="margin-top:8px">
+        <button class="b" id="l1-new">새 장면</button>
+        <button class="b primary" id="l1-log">결과 기록</button>
+      </div>
+    </div>
+    <div class="box">
+      <h3>탐지 결과 해석</h3>
+      <div class="legend" style="margin-top:0">
+        <span><i style="background:#e7ad35"></i>AI 탐지</span>
+        <span><i style="background:#4fc07c"></i>정탐 TP</span>
+        <span><i style="background:#ef5b44"></i>오경보 FP</span>
+        <span><i style="border:2px dashed #ef5b44"></i>미탐 FN</span>
+      </div>
+      <p class="note" style="margin:10px 0 0">정답 색상은 '정답 보기'를 켰을 때만 표시됩니다. 실제 작전에서는 정답을 알 수 없습니다.</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="box" style="padding:10px">
+      <div class="canvas-frame">
+        <canvas id="l1-cv" aria-label="가상 정찰 영상과 AI 탐지 결과"></canvas>
+        <div class="hud" id="l1-hud">SENSOR EO-1 · 장면 #1</div>
+      </div>
+      <p class="note" style="margin:8px 4px 0">탐지 박스를 누르면 아래에 확대 영상이 열립니다.</p>
+    </div>
+    <div class="box" id="l1-review-box" hidden>
+      <h3>운용자 확인 <span id="l1-rev-id" class="mono"></span></h3>
+      <div class="review">
+        <canvas id="l1-zoom" width="200" height="160" aria-label="확대 영상"></canvas>
+        <div>
+          <div class="btns" style="margin-bottom:10px">
+            <button class="b" id="l1-eo" aria-pressed="true">EO 주간영상</button>
+            <button class="b" id="l1-ir" aria-pressed="false">IR 열영상</button>
+          </div>
+          <p class="note" id="l1-rev-score" style="margin:0 0 10px"></p>
+          <div class="btns">
+            <button class="b ok" id="l1-confirm">표적 확인</button>
+            <button class="b alert" id="l1-reject">기각 (오탐)</button>
+          </div>
+          <p class="note" style="margin:10px 0 0">힌트: 실제 장비는 엔진 열 신호가 있고, 기만체는 지지대·패널 이음매가 보입니다.</p>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>성능 지표</h3>
+      <div class="stats" id="l1-stats"></div>
+      <div class="tbl-wrap" style="margin-top:14px">
+        <table>
+          <thead><tr><th>구분</th><th class="num">정탐 TP</th><th class="num">오경보 FP</th><th class="num">미탐 FN</th><th class="num">정밀도</th><th class="num">재현율</th><th class="num">F1</th></tr></thead>
+          <tbody id="l1-cmp"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <h3>임계값별 정밀도·재현율 (현재 장면)</h3>
+        <canvas id="l1-pr" aria-label="임계값별 정밀도와 재현율 그래프"></canvas>
+        <div class="legend"><span><i style="background:var(--olive)"></i>정밀도</span><span><i style="background:var(--accent)"></i>재현율</span><span>세로선 = 현재 임계값</span></div>
+      </div>
+      <div class="box">
+        <h3>기록 (활동지 옮겨 적기용)</h3>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>장면</th><th class="num">임계값</th><th>기상</th><th class="num">정밀도</th><th class="num">재현율</th><th class="num">F1</th></tr></thead>
+          <tbody id="l1-log-body"><tr><td colspan="6" class="note">'결과 기록'을 누르면 현재 지표가 여기에 쌓입니다.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB 2 ================= -->
+<section class="lab" id="lab2" role="tabpanel" aria-labelledby="t-lab2" hidden>
+  <div class="col">
+    <div class="box brief">
+      <h2>실습 2. 차량 예측정비</h2>
+      <p>과거 정비 기록 400건으로 '30일 내 고장' 예측 모델을 학습시키고, 정비 슬롯 4개를 차량 12대 중 어디에 배정할지 결정합니다.</p>
+      <ol>
+        <li>사용할 센서를 고르고 '모델 학습'을 누르세요.</li>
+        <li>학습 곡선과 센서별 영향도를 확인하세요.</li>
+        <li>차량 4대를 골라 정비를 배정하세요.</li>
+        <li>'30일 운용'으로 결과를 보고 AI 추천과 비교하세요.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h3>학습 데이터 특징 선택</h3>
+      <label class="check"><input type="checkbox" id="l2-f0" checked> 엔진 진동 (mm/s)</label>
+      <label class="check"><input type="checkbox" id="l2-f1" checked> 오일 온도 (°C)</label>
+      <label class="check"><input type="checkbox" id="l2-f2" checked> 정비 후 운행시간 (h)</label>
+      <div class="btns" style="margin-top:8px">
+        <button class="b primary" id="l2-train">모델 학습</button>
+        <button class="b" id="l2-newfleet">새 차량 편성</button>
+      </div>
+    </div>
+    <div class="box">
+      <h3>학습 곡선</h3>
+      <canvas id="l2-loss" aria-label="학습 손실 곡선"></canvas>
+      <p class="note" id="l2-train-info" style="margin:8px 0 0">아직 학습하지 않았습니다.</p>
+      <div id="l2-weights" style="margin-top:10px"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="box">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h3 style="margin:0">차량 현황 · 정비 슬롯 <span id="l2-slots" class="mono">0 / 4</span></h3>
+        <div class="btns">
+          <button class="b" id="l2-auto" disabled>AI 추천대로 배정</button>
+          <button class="b" id="l2-clear">배정 초기화</button>
+          <button class="b primary" id="l2-run">30일 운용</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>정비</th><th>차량</th><th class="num">진동</th><th class="num">오일온도</th><th class="num">운행시간</th><th>AI 고장 확률</th><th>30일 결과</th></tr></thead>
+          <tbody id="l2-fleet"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="box" id="l2-result-box">
+      <h3>운용 결과</h3>
+      <div class="stats" id="l2-stats"></div>
+      <p class="callout" id="l2-msg" style="margin:14px 0 0">정비할 차량 4대를 고르고 '30일 운용'을 누르세요. AI 모델을 학습하지 않고 직감으로만 골라봐도 됩니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB 3 ================= -->
+<section class="lab" id="lab3" role="tabpanel" aria-labelledby="t-lab3" hidden>
+  <div class="col">
+    <div class="box brief">
+      <h2>실습 3. 데이터 오염과 적대적 공격</h2>
+      <p>레이더 반사 강도와 이동 속도로 표적/비표적을 구분하는 분류기(k-최근접 이웃)입니다. 공격자가 학습 데이터나 입력을 조작하면 어떻게 될까요?</p>
+      <ol>
+        <li>오염 0%에서 기준 정확도를 기록하세요.</li>
+        <li>무작위 라벨 오염을 10%, 30%로 올려보세요.</li>
+        <li>'표적형 오염'으로 바꿔 같은 비율에서 비교하세요.</li>
+        <li>적대적 섭동을 키운 뒤 '데이터 정제'를 켜보세요.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h3>공격 설정</h3>
+      <label class="check"><input type="radio" name="l3-mode" id="l3-m-rand" value="random" checked> 무작위 라벨 오염</label>
+      <label class="check"><input type="radio" name="l3-mode" id="l3-m-tgt" value="targeted"> 표적형 오염 (표적 영역에 가짜 '비표적' 주입)</label>
+      <label class="ctl" for="l3-p" style="margin-top:8px">오염 비율 <output id="l3-p-o">0%</output>
+        <input type="range" id="l3-p" min="0" max="40" step="5" value="0"></label>
+      <label class="ctl" for="l3-eps">적대적 섭동 크기 <output id="l3-eps-o">0.00</output>
+        <input type="range" id="l3-eps" min="0" max="0.25" step="0.01" value="0"></label>
+      <h3 style="margin-top:12px">방어 설정</h3>
+      <label class="check"><input type="checkbox" id="l3-clean"> 데이터 정제 (이웃과 라벨이 다른 샘플 제거)</label>
+      <label class="check"><input type="checkbox" id="l3-test" checked> 시험 데이터 표시</label>
+      <div class="btns" style="margin-top:8px"><button class="b" id="l3-new">데이터 재생성</button></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="box">
+      <div class="stats" id="l3-stats"></div>
+    </div>
+    <div class="box" style="padding:10px">
+      <canvas id="l3-cv" aria-label="특징 공간과 결정 경계"></canvas>
+      <div class="legend" style="padding:0 6px">
+        <span><i style="background:#d9962a"></i>표적 영역/학습 샘플</span>
+        <span><i style="background:#3e8a63"></i>비표적 영역/학습 샘플</span>
+        <span>✕ 오염 샘플</span>
+        <span>○ 정제로 제거됨</span>
+        <span>▲ 시험 데이터 (빨간 테두리 = 오분류)</span>
+      </div>
+      <p class="note" style="margin:8px 6px 0">가로축: 레이더 반사 강도 · 세로축: 이동 속도 (정규화 값)</p>
+    </div>
+    <div class="box">
+      <h3>정리 질문</h3>
+      <p class="lead" style="margin:0">무작위 오염보다 표적형 오염이 적은 양으로도 표적 탐지율을 더 크게 떨어뜨리는 이유는 무엇일까요? 데이터 정제가 막아주는 공격과 막지 못하는 공격을 구분해 보세요.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB 4 ================= -->
+<section class="lab" id="lab4" role="tabpanel" aria-labelledby="t-lab4" hidden>
+  <div class="col">
+    <div class="box brief">
+      <h2>실습 4. AI 결심지원 시나리오</h2>
+      <p>가상 상황 6개에서 AI가 추천과 신뢰도, 근거를 제시합니다. 지휘관 입장에서 승인·보류·거부 중 하나를 고르세요.</p>
+      <ol>
+        <li>상황과 AI 근거를 읽으세요.</li>
+        <li>필요하면 '추가 정보 요청'으로 확인하세요.</li>
+        <li>판단을 고르고 해설을 읽으세요.</li>
+        <li>마지막에 나의 판단 성향을 확인하세요.</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h3>진행</h3>
+      <div class="progress" id="l4-prog"></div>
+      <p class="note" id="l4-score" style="margin:10px 0 0"></p>
+      <div class="btns" style="margin-top:10px"><button class="b" id="l4-restart">처음부터</button></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="box scn" id="l4-card"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+"use strict";
+// ---------- utilities ----------
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct = x => isFinite(x) ? (x * 100).toFixed(0) + "%" : "–";
+const f2 = x => isFinite(x) ? x.toFixed(2) : "–";
+function fit(cv, w, h) {
+  const dpr = window.devicePixelRatio || 1, cw = cv.clientWidth || w;
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * h / w * dpr);
+  cv.style.aspectRatio = w + " / " + h;
+  const ctx = cv.getContext("2d"); ctx.setTransform(cv.width / w, 0, 0, cv.height / h, 0, 0); return ctx;
+}
+function stat(k, v, s, cls) { return `<div class="stat ${cls || ""}"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`; }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------- tabs ----------
+const tabs = [...document.querySelectorAll("nav.tabs button")];
+function showTab(id) {
+  tabs.forEach(b => b.setAttribute("aria-selected", b.dataset.tab === id));
+  document.querySelectorAll("section.lab").forEach(s => s.hidden = s.id !== id);
+  store("dai-tab", id);
+  redraw[id] && redraw[id]();
+}
+tabs.forEach(b => b.addEventListener("click", () => { showTab(b.dataset.tab); history.replaceState(null, "", "#" + b.dataset.tab); }));
+const redraw = {};
+
+// =====================================================================
+// LAB 1  표적 탐지
+// =====================================================================
+const L1 = { W: 800, H: 480, seed: 1, scene: 1, objs: [], terrain: null, sel: null, view: "eo", logs: [] };
+const TYPES = {
+  tank:  { name: "전차", target: true },
+  apc:   { name: "장갑차", target: true },
+  truck: { name: "민간 트럭", target: false },
+  car:   { name: "민간 승용차", target: false },
+  decoy: { name: "기만체", target: false },
+};
+function l1Generate() {
+  const r = rng(L1.seed * 7919);
+  // terrain
+  const patches = [];
+  for (let i = 0; i < 70; i++) patches.push({ x: r() * L1.W, y: r() * L1.H, rx: 30 + r() * 90, ry: 20 + r() * 60, a: r() * Math.PI, c: r() });
+  const trees = [];
+  for (let i = 0; i < 260; i++) { const cx = r() < .5 ? 80 + r() * 260 : 520 + r() * 260; trees.push({ x: cx + gauss(r) * 30, y: r() * L1.H, s: 4 + r() * 6 }); }
+  const roadY = 140 + r() * 200;
+  const road = []; for (let x = -20; x <= L1.W + 20; x += 40) road.push([x, roadY + Math.sin(x / 120 + r()) * 30]);
+  const village = { x: 340 + r() * 120, y: roadY - 70, w: 150, h: 110 };
+  const houses = []; for (let i = 0; i < 9; i++) houses.push({ x: village.x + r() * village.w, y: village.y + r() * village.h, w: 14 + r() * 12, h: 12 + r() * 10, a: r() * .6 - .3 });
+  L1.terrain = { patches, trees, road, village, houses };
+  // objects
+  const counts = { tank: 6, apc: 4, truck: 6, car: 8, decoy: 4 };
+  const objs = []; let id = 1;
+  const roadAt = x => { const i = clamp(Math.floor((x + 20) / 40), 0, road.length - 2); const t = (x + 20 - i * 40) / 40; return road[i][1] * (1 - t) + road[i + 1][1] * t; };
+  for (const [type, n] of Object.entries(counts)) for (let k = 0; k < n; k++) {
+    let x, y, tries = 0;
+    do {
+      if (type === "car" || type === "truck") { x = 30 + r() * (L1.W - 60); y = r() < .6 ? roadAt(x) + gauss(r) * 8 : village.y + r() * village.h; }
+      else { x = r() < .5 ? 80 + r() * 260 : 520 + r() * 250; y = 30 + r() * (L1.H - 60); }
+      tries++;
+    } while (tries < 60 && objs.some(o => Math.hypot(o.x - x, o.y - y) < 40));
+    objs.push({ id: id++, type, x, y, a: r() * Math.PI * 2, col: r(), u1: gauss(r), u2: gauss(r), review: null });
+  }
+  L1.objs = objs; L1.sel = null; $("l1-review-box").hidden = true;
+  l1Score();
+}
+function l1Score() {
+  const bad = $("l1-weather").checked;
+  for (const o of L1.objs) {
+    const t = TYPES[o.type].target;
+    let m, sd;
+    if (!bad) { m = t ? .76 : o.type === "decoy" ? .62 : .24; sd = .13; }
+    else { m = t ? .54 : o.type === "decoy" ? .5 : .36; sd = .17; }
+    o.score = clamp(m + o.u1 * sd, .01, .99);
+  }
+}
+function drawVehicle(ctx, o, s, mode) {
+  const ir = mode === "ir";
+  ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.a); ctx.scale(s, s);
+  const shadow = "rgba(0,0,0,.35)";
+  if (o.type === "tank" || o.type === "decoy") {
+    const body = ir ? (o.type === "tank" ? "#7a7a7a" : "#3a3a3a") : (o.type === "tank" ? "#55603f" : "#5b6544");
+    ctx.fillStyle = shadow; ctx.fillRect(-11, -6, 24, 15);
+    ctx.fillStyle = body; ctx.fillRect(-12, -7, 24, 14);
+    ctx.fillStyle = ir ? body : "#3d4530"; ctx.fillRect(-12, -7, 24, 2.5); ctx.fillRect(-12, 4.5, 24, 2.5);
+    ctx.beginPath(); ctx.arc(-1, 0, 4.5, 0, 7); ctx.fillStyle = ir ? body : "#48522f"; ctx.fill();
+    ctx.strokeStyle = ir ? body : "#2f3524"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(3, 0); ctx.lineTo(16, 0); ctx.stroke();
+    if (o.type === "tank" && ir) { const g = ctx.createRadialGradient(-8, 0, 0, -8, 0, 8); g.addColorStop(0, "#ffffff"); g.addColorStop(.5, "#e0e0e0"); g.addColorStop(1, "rgba(200,200,200,0)"); ctx.fillStyle = g; ctx.fillRect(-16, -8, 16, 16); }
+    if (o.type === "decoy" && s > 2 && !ir) { ctx.strokeStyle = "rgba(230,230,200,.55)"; ctx.lineWidth = .3; for (let i = -8; i <= 8; i += 4) { ctx.beginPath(); ctx.moveTo(i, -7); ctx.lineTo(i, 7); ctx.stroke(); } ctx.strokeStyle = "#2a2a1e"; ctx.lineWidth = .5; [[-12, -7], [12, -7], [-12, 7], [12, 7]].forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(a * 1.25, b * 1.6); ctx.stroke(); }); }
+  } else if (o.type === "apc") {
+    const body = ir ? "#8a8a8a" : "#5e6847";
+    ctx.fillStyle = shadow; ctx.fillRect(-10, -5, 21, 12);
+    ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-10, -6); ctx.lineTo(8, -6); ctx.lineTo(11, 0); ctx.lineTo(8, 6); ctx.lineTo(-10, 6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = ir ? body : "#454e33"; ctx.fillRect(-4, -2.5, 5, 5);
+    if (ir) { const g = ctx.createRadialGradient(4, 0, 0, 4, 0, 7); g.addColorStop(0, "#ffffff"); g.addColorStop(1, "rgba(200,200,200,0)"); ctx.fillStyle = g; ctx.fillRect(-3, -7, 14, 14); }
+  } else if (o.type === "truck") {
+    const cols = ["#c9c3b5", "#a34a3a", "#3d6fa3", "#d8d2c0"];
+    const c = ir ? "#9a9a9a" : cols[Math.floor(o.col * cols.length)];
+    ctx.fillStyle = shadow; ctx.fillRect(-11, -4, 24, 10);
+    ctx.fillStyle = c; ctx.fillRect(-12, -5, 16, 10);
+    ctx.fillStyle = ir ? "#c8c8c8" : "#e9e5da"; ctx.fillRect(5, -4.5, 7, 9);
+  } else {
+    const cols = ["#e6e6e6", "#202020", "#b03030", "#3a6fb0", "#c0c0c0", "#e0c040"];
+    const c = ir ? "#a8a8a8" : cols[Math.floor(o.col * cols.length)];
+    ctx.fillStyle = shadow; ctx.fillRect(-6, -3, 14, 8);
+    ctx.fillStyle = c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-7, -4, 14, 8, 2.5) : ctx.rect(-7, -4, 14, 8); ctx.fill();
+    ctx.fillStyle = ir ? "#888" : "rgba(30,40,50,.7)"; ctx.fillRect(1, -3, 3, 6);
+  }
+  ctx.restore();
+}
+function drawTerrain(ctx, ir) {
+  const T = L1.terrain;
+  ctx.fillStyle = ir ? "#2b2b2b" : "#4d5a35"; ctx.fillRect(0, 0, L1.W, L1.H);
+  for (const p of T.patches) { ctx.fillStyle = ir ? `rgba(${60 + p.c * 30 | 0},${60 + p.c * 30 | 0},${60 + p.c * 30 | 0},.5)` : `rgba(${70 + p.c * 40 | 0},${85 + p.c * 30 | 0},${45 + p.c * 20 | 0},.55)`; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.rx, p.ry, p.a, 0, 7); ctx.fill(); }
+  ctx.strokeStyle = ir ? "#4a4a4a" : "#a89a74"; ctx.lineWidth = 12; ctx.lineJoin = "round"; ctx.beginPath(); T.road.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+  for (const h of T.houses) { ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.a); ctx.fillStyle = ir ? "#555" : "#8f8578"; ctx.fillRect(-h.w / 2, -h.h / 2, h.w, h.h); ctx.fillStyle = ir ? "#444" : "#6f655a"; ctx.fillRect(-h.w / 2, -1, h.w, 2); ctx.restore(); }
+  for (const t of L1.terrain.trees) { ctx.fillStyle = ir ? "rgba(70,70,70,.8)" : "rgba(38,52,26,.85)"; ctx.beginPath(); ctx.arc(t.x, t.y, t.s, 0, 7); ctx.fill(); }
+}
+function l1Draw() {
+  const cv = $("l1-cv"); const ctx = fit(cv, L1.W, L1.H);
+  const th = +$("l1-th").value, truth = $("l1-truth").checked, bad = $("l1-weather").checked;
+  drawTerrain(ctx, false);
+  for (const o of L1.objs) drawVehicle(ctx, o, 1, "eo");
+  if (bad) { ctx.fillStyle = "rgba(200,205,195,.42)"; ctx.fillRect(0, 0, L1.W, L1.H); const r = rng(L1.seed); for (let i = 0; i < 40; i++) { ctx.fillStyle = "rgba(220,225,215,.12)"; ctx.beginPath(); ctx.ellipse(r() * L1.W, r() * L1.H, 60 + r() * 120, 30 + r() * 60, 0, 0, 7); ctx.fill(); } }
+  ctx.font = "600 11px IBM Plex Mono, Consolas, monospace"; ctx.lineWidth = 2;
+  for (const o of L1.objs) {
+    const det = o.score >= th, tgt = TYPES[o.type].target;
+    if (!det && !(truth && tgt)) continue;
+    let col = "#e7ad35";
+    if (truth) col = det ? (tgt ? "#4fc07c" : "#ef5b44") : "#ef5b44";
+    ctx.strokeStyle = col; ctx.setLineDash(det ? [] : [5, 4]);
+    ctx.strokeRect(o.x - 18, o.y - 18, 36, 36); ctx.setLineDash([]);
+    if (det) {
+      const lab = o.score.toFixed(2) + (o.review === "confirm" ? " ✓" : o.review === "reject" ? " ✕" : "");
+      const w = ctx.measureText(lab).width + 8;
+      ctx.fillStyle = col; ctx.fillRect(o.x - 18, o.y - 33, w, 15);
+      ctx.fillStyle = "#1a2420"; ctx.fillText(lab, o.x - 14, o.y - 22);
+    }
+    if (L1.sel === o) { ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1; ctx.strokeRect(o.x - 22, o.y - 22, 44, 44); ctx.lineWidth = 2; }
+  }
+  $("l1-hud").textContent = `SENSOR EO-1 · 장면 #${L1.scene} · ${bad ? "기상 불량" : "주간 맑음"} · 임계값 ${th.toFixed(2)}`;
+  l1Metrics(); l1PR(); if (L1.sel) l1Zoom();
+}
+function confusion(th, useReview) {
+  let tp = 0, fp = 0, fn = 0, tn = 0;
+  for (const o of L1.objs) {
+    let pos = o.score >= th; if (useReview && pos && o.review === "reject") pos = false;
+    const t = TYPES[o.type].target;
+    if (pos && t) tp++; else if (pos) fp++; else if (t) fn++; else tn++;
+  }
+  const p = tp / (tp + fp), r = tp / (tp + fn), f = 2 * p * r / (p + r);
+  return { tp, fp, fn, tn, p, r, f: isFinite(f) ? f : 0, acc: (tp + tn) / L1.objs.length };
+}
+function l1Metrics() {
+  const th = +$("l1-th").value, a = confusion(th, false), b = confusion(th, true);
+  const reviewed = L1.objs.filter(o => o.review).length;
+  $("l1-stats").innerHTML =
+    stat("정밀도", pct(a.p), "탐지 중 진짜 표적 비율") +
+    stat("재현율", pct(a.r), "실제 표적 중 찾은 비율") +
+    stat("오경보 FP", a.fp, "비표적을 표적으로 보고", a.fp ? "bad" : "good") +
+    stat("미탐 FN", a.fn, "놓친 실제 표적", a.fn ? "bad" : "good");
+  $("l1-cmp").innerHTML =
+    `<tr><td>AI 단독</td><td class="num">${a.tp}</td><td class="num">${a.fp}</td><td class="num">${a.fn}</td><td class="num">${pct(a.p)}</td><td class="num">${pct(a.r)}</td><td class="num">${f2(a.f)}</td></tr>` +
+    `<tr><td>AI + 운용자 확인 <span class="pill">${reviewed}건 검토</span></td><td class="num">${b.tp}</td><td class="num">${b.fp}</td><td class="num">${b.fn}</td><td class="num">${pct(b.p)}</td><td class="num">${pct(b.r)}</td><td class="num">${f2(b.f)}</td></tr>`;
+}
+function l1PR() {
+  const cv = $("l1-pr"), W = 400, H = 220, ctx = fit(cv, W, H);
+  const pad = { l: 36, r: 10, t: 10, b: 28 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const X = t => pad.l + (t - .05) / .9 * iw, Y = v => pad.t + (1 - v) * ih;
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = "11px IBM Plex Mono, Consolas, monospace"; ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  for (const v of [0, .5, 1]) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(W - pad.r, Y(v)); ctx.stroke(); ctx.fillText((v * 100) + "%", 2, Y(v) + 4); }
+  for (const t of [.1, .3, .5, .7, .9]) ctx.fillText(t.toFixed(1), X(t) - 9, H - 10);
+  const series = [["p", css("--olive")], ["r", css("--accent")]];
+  for (const [k, c] of series) {
+    ctx.strokeStyle = c; ctx.lineWidth = 2.5; ctx.beginPath(); let started = false;
+    for (let t = .05; t <= .951; t += .01) { const m = confusion(t, false); const v = m[k]; if (!isFinite(v)) continue; started ? ctx.lineTo(X(t), Y(v)) : ctx.moveTo(X(t), Y(v)); started = true; }
+    ctx.stroke();
+  }
+  const th = +$("l1-th").value, m = confusion(th, false);
+  ctx.strokeStyle = css("--fg"); ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(th), pad.t); ctx.lineTo(X(th), pad.t + ih); ctx.stroke(); ctx.setLineDash([]);
+  for (const [k, c] of series) if (isFinite(m[k])) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(X(th), Y(m[k]), 4.5, 0, 7); ctx.fill(); }
+}
+function l1Zoom() {
+  const o = L1.sel, cv = $("l1-zoom"), ctx = cv.getContext("2d");
+  const ir = L1.view === "ir";
+  ctx.save(); ctx.clearRect(0, 0, 200, 160);
+  ctx.translate(100, 80); ctx.scale(4, 4); ctx.translate(-o.x, -o.y);
+  drawTerrain(ctx, ir); drawVehicle(ctx, o, 1.6, L1.view);
+  ctx.restore();
+  if ($("l1-weather").checked && !ir) { ctx.fillStyle = "rgba(200,205,195,.35)"; ctx.fillRect(0, 0, 200, 160); }
+  ctx.strokeStyle = "#e7ad35"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(100, 0); ctx.lineTo(100, 60); ctx.moveTo(100, 100); ctx.lineTo(100, 160); ctx.moveTo(0, 80); ctx.lineTo(60, 80); ctx.moveTo(140, 80); ctx.lineTo(200, 80); ctx.stroke();
+  ctx.font = "600 10px IBM Plex Mono, Consolas, monospace"; ctx.fillStyle = "#e7ad35"; ctx.fillText(ir ? "IR WHITE-HOT" : "EO ×4", 6, 14);
+  $("l1-rev-id").textContent = "#" + String(o.id).padStart(2, "0");
+  $("l1-rev-score").textContent = `AI 판단: 표적 신뢰도 ${o.score.toFixed(2)}` + (o.review ? ` · 운용자 판정: ${o.review === "confirm" ? "표적 확인" : "기각"}` : " · 미검토");
+  $("l1-eo").setAttribute("aria-pressed", !ir); $("l1-ir").setAttribute("aria-pressed", ir);
+  $("l1-eo").classList.toggle("primary", !ir); $("l1-ir").classList.toggle("primary", ir);
+}
+$("l1-cv").addEventListener("click", e => {
+  const cv = e.currentTarget, rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * L1.W, y = (e.clientY - rect.top) / rect.height * L1.H;
+  const th = +$("l1-th").value;
+  let best = null, bd = 26;
+  for (const o of L1.objs) if (o.score >= th) { const d = Math.hypot(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } }
+  L1.sel = best; $("l1-review-box").hidden = !best; l1Draw();
+  if (best) $("l1-review-box").scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+$("l1-eo").onclick = () => { L1.view = "eo"; l1Zoom(); };
+$("l1-ir").onclick = () => { L1.view = "ir"; l1Zoom(); };
+$("l1-confirm").onclick = () => { if (L1.sel) { L1.sel.review = "confirm"; l1Draw(); } };
+$("l1-reject").onclick = () => { if (L1.sel) { L1.sel.review = "reject"; l1Draw(); } };
+$("l1-th").addEventListener("input", e => { $("l1-th-o").textContent = (+e.target.value).toFixed(2); if (L1.sel && L1.sel.score < +e.target.value) { L1.sel = null; $("l1-review-box").hidden = true; } l1Draw(); });
+$("l1-weather").addEventListener("change", () => { l1Score(); l1Draw(); });
+$("l1-truth").addEventListener("change", l1Draw);
+$("l1-new").onclick = () => { L1.seed++; L1.scene++; l1Generate(); l1Draw(); };
+$("l1-log").onclick = () => {
+  const th = +$("l1-th").value, m = confusion(th, true);
+  L1.logs.push(`<tr><td>#${L1.scene}</td><td class="num">${th.toFixed(2)}</td><td>${$("l1-weather").checked ? "악화" : "맑음"}</td><td class="num">${pct(m.p)}</td><td class="num">${pct(m.r)}</td><td class="num">${f2(m.f)}</td></tr>`);
+  $("l1-log-body").innerHTML = L1.logs.slice().reverse().join("");
+};
+redraw.lab1 = l1Draw;
+
+// =====================================================================
+// LAB 2  예측정비
+// =====================================================================
+const FEAT = [{ name: "엔진 진동", unit: "mm/s" }, { name: "오일 온도", unit: "°C" }, { name: "운행시간", unit: "h" }];
+const trueLogit = v => -7.5 + .45 * v[0] + .05 * (v[1] - 70) + .004 * v[2];
+const sig = z => 1 / (1 + Math.exp(-z));
+const L2 = { data: [], fleet: [], fseed: 11, model: null, losses: [], ran: false, training: false };
+function sampleVehicle(r) { return [clamp(5.5 + gauss(r) * 2.2, 2, 12.5), clamp(88 + gauss(r) * 9, 68, 118), clamp(r() * 600, 0, 600)]; }
+function l2Data() { const r = rng(4242); L2.data = []; for (let i = 0; i < 400; i++) { const v = sampleVehicle(r); L2.data.push({ v, y: r() < sig(trueLogit(v)) ? 1 : 0 }); } }
+function l2Fleet() {
+  const r = rng(L2.fseed * 131);
+  L2.fleet = [];
+  for (let i = 0; i < 12; i++) { const v = sampleVehicle(r); L2.fleet.push({ id: "차량 " + String(i + 1).padStart(2, "0"), v, pTrue: sig(trueLogit(v)), u: r(), slot: false }); }
+  L2.ran = false; l2Render();
+}
+function l2Train() {
+  if (L2.training) return;
+  const use = [0, 1, 2].filter(i => $("l2-f" + i).checked);
+  if (!use.length) { $("l2-train-info").textContent = "센서를 하나 이상 선택해야 학습할 수 있습니다."; return; }
+  const n = L2.data.length;
+  const mu = use.map(i => L2.data.reduce((s, d) => s + d.v[i], 0) / n);
+  const sd = use.map((i, k) => Math.sqrt(L2.data.reduce((s, d) => s + (d.v[i] - mu[k]) ** 2, 0) / n));
+  const X = L2.data.map(d => use.map((i, k) => (d.v[i] - mu[k]) / sd[k])), Y = L2.data.map(d => d.y);
+  const w = new Array(use.length).fill(0); let b = 0;
+  L2.losses = []; L2.training = true; $("l2-train").disabled = true;
+  const epochs = 240, lr = .4; let ep = 0;
+  const step = () => {
+    for (let k = 0; k < 6 && ep < epochs; k++, ep++) {
+      const gw = new Array(use.length).fill(0); let gb = 0, loss = 0;
+      for (let j = 0; j < n; j++) { let z = b; for (let q = 0; q < use.length; q++) z += w[q] * X[j][q]; const p = sig(z); const e = p - Y[j]; gb += e; for (let q = 0; q < use.length; q++) gw[q] += e * X[j][q]; loss -= Y[j] ? Math.log(p + 1e-9) : Math.log(1 - p + 1e-9); }
+      b -= lr * gb / n; for (let q = 0; q < use.length; q++) w[q] -= lr * gw[q] / n;
+      L2.losses.push(loss / n);
+    }
+    L2.model = { use, mu, sd, w: w.slice(), b };
+    l2LossDraw(); l2Render();
+    if (ep < epochs) requestAnimationFrame(step);
+    else {
+      L2.training = false; $("l2-train").disabled = false;
+      let correct = 0; for (let j = 0; j < n; j++) { let z = b; for (let q = 0; q < use.length; q++) z += w[q] * X[j][q]; correct += (sig(z) >= .5) === !!Y[j]; }
+      $("l2-train-info").textContent = `학습 완료 · ${epochs}회 반복 · 최종 손실 ${L2.losses.at(-1).toFixed(3)} · 학습 정확도 ${pct(correct / n)}`;
+      const mx = Math.max(...w.map(Math.abs));
+      $("l2-weights").innerHTML = '<p class="note" style="margin:0 0 6px">센서별 영향도 (표준화 계수)</p>' + use.map((i, k) => `<div style="display:grid;grid-template-columns:80px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin-bottom:4px"><span>${FEAT[i].name}</span><div class="bar"><span style="width:${Math.abs(w[k]) / mx * 100}%;background:var(--olive)"></span></div><span class="mono" style="text-align:right">${w[k].toFixed(2)}</span></div>`).join("");
+      $("l2-auto").disabled = false;
+    }
+  };
+  $("l2-train-info").textContent = "학습 중…"; $("l2-weights").innerHTML = "";
+  requestAnimationFrame(step);
+}
+function l2Predict(v) { const m = L2.model; if (!m) return null; let z = m.b; m.use.forEach((i, k) => z += m.w[k] * (v[i] - m.mu[k]) / m.sd[k]); return sig(z); }
+function l2LossDraw() {
+  const cv = $("l2-loss"), W = 300, H = 140, ctx = fit(cv, W, H);
+  ctx.clearRect(0, 0, W, H);
+  const pad = { l: 34, r: 8, t: 8, b: 20 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const L = L2.losses, max = .7, X = i => pad.l + i / 240 * iw, Y = v => pad.t + (1 - clamp(v / max, 0, 1)) * ih;
+  ctx.strokeStyle = css("--line"); ctx.fillStyle = css("--muted"); ctx.font = "10px IBM Plex Mono, Consolas, monospace"; ctx.lineWidth = 1;
+  for (const v of [0, .35, .7]) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(W - pad.r, Y(v)); ctx.stroke(); ctx.fillText(v.toFixed(2), 2, Y(v) + 3); }
+  ctx.font = "10px IBM Plex Sans KR, Malgun Gothic, sans-serif"; ctx.fillText("반복 횟수 →", W - 64, H - 4);
+  if (!L.length) return;
+  ctx.beginPath(); L.forEach((v, i) => i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v)));
+  ctx.lineTo(X(L.length - 1), Y(0)); ctx.lineTo(X(0), Y(0)); ctx.closePath();
+  ctx.fillStyle = css("--accent-soft"); ctx.fill();
+  ctx.strokeStyle = css("--accent"); ctx.lineWidth = 2; ctx.beginPath(); L.forEach((v, i) => i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v))); ctx.stroke();
+  ctx.fillStyle = css("--accent"); ctx.beginPath(); ctx.arc(X(L.length - 1), Y(L.at(-1)), 3.5, 0, 7); ctx.fill();
+}
+function outcome(slots) { let fail = 0, waste = 0; L2.fleet.forEach((f, i) => { const willFail = f.u < f.pTrue; if (slots.has(i)) { if (!willFail) waste++; } else if (willFail) fail++; }); return { fail, waste, avail: 12 - fail }; }
+function l2Render() {
+  const used = L2.fleet.filter(f => f.slot).length;
+  $("l2-slots").textContent = `${used} / 4`;
+  $("l2-fleet").innerHTML = L2.fleet.map((f, i) => {
+    const p = l2Predict(f.v);
+    const willFail = f.u < f.pTrue;
+    let res = '<span class="note">–</span>';
+    if (L2.ran) res = f.slot ? (willFail ? '<span class="pill ok">정비로 고장 예방</span>' : '<span class="pill warn">불필요 정비</span>') : (willFail ? '<span class="pill bad">운용 중 고장</span>' : '<span class="pill">정상</span>');
+    const pc = p == null ? "" : `<div style="display:flex;gap:8px;align-items:center"><div class="bar" style="flex:1"><span style="width:${p * 100}%;background:${p > .5 ? "var(--alert)" : p > .25 ? "var(--accent)" : "var(--olive)"}"></span></div><span class="mono" style="width:38px;text-align:right">${pct(p)}</span></div>`;
+    return `<tr><td><input type="checkbox" id="l2-s${i}" data-i="${i}" ${f.slot ? "checked" : ""} ${!f.slot && used >= 4 || L2.ran ? "disabled" : ""} aria-label="${f.id} 정비 배정" style="accent-color:var(--accent);width:16px;height:16px"></td><td>${f.id}</td><td class="num">${f.v[0].toFixed(1)}</td><td class="num">${f.v[1].toFixed(0)}</td><td class="num">${f.v[2].toFixed(0)}</td><td style="min-width:140px">${p == null ? '<span class="note">모델 학습 필요</span>' : pc}</td><td>${res}</td></tr>`;
+  }).join("");
+  L2.fleet.forEach((f, i) => $("l2-s" + i).onchange = e => { f.slot = e.target.checked; l2Render(); });
+  if (!L2.ran) { $("l2-stats").innerHTML = stat("정비 배정", `${used}/4`, "슬롯") + stat("가용 차량", "–", "30일 후") + stat("운용 중 고장", "–") + stat("불필요 정비", "–"); return; }
+  const mine = outcome(new Set(L2.fleet.map((f, i) => f.slot ? i : -1).filter(i => i >= 0)));
+  $("l2-stats").innerHTML = stat("가용 차량", `${mine.avail}/12`, "30일 운용 후", mine.fail ? "" : "good") + stat("운용 중 고장", mine.fail, "임무 중 정지", mine.fail ? "bad" : "good") + stat("불필요 정비", mine.waste, "고장 안 날 차량 정비") + stat("배정 슬롯", `${used}/4`);
+  let msg = `내 배정: 고장 ${mine.fail}대, 불필요 정비 ${mine.waste}대.`;
+  if (L2.model) {
+    const ai = new Set(L2.fleet.map((f, i) => [l2Predict(f.v), i]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]));
+    const a = outcome(ai);
+    msg += ` 같은 상황에서 AI 추천 상위 4대를 정비했다면 고장 ${a.fail}대, 불필요 정비 ${a.waste}대였습니다.`;
+  }
+  const exp = L2.fleet.reduce((s, f) => s + f.pTrue, 0) * 8 / 12;
+  msg += ` 무작위로 4대를 골랐다면 평균 ${exp.toFixed(1)}대 고장이 예상됩니다. 확률은 확률일 뿐이라 AI 추천도 틀릴 수 있다는 점을 확인하세요.`;
+  $("l2-msg").textContent = msg;
+}
+$("l2-train").onclick = l2Train;
+$("l2-newfleet").onclick = () => { L2.fseed++; l2Fleet(); };
+$("l2-clear").onclick = () => { L2.fleet.forEach(f => f.slot = false); L2.ran = false; l2Render(); };
+$("l2-auto").onclick = () => { if (!L2.model) return; L2.ran = false; const top = L2.fleet.map((f, i) => [l2Predict(f.v), i]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]); L2.fleet.forEach((f, i) => f.slot = top.includes(i)); l2Render(); };
+$("l2-run").onclick = () => { if (!L2.fleet.some(f => f.slot)) { $("l2-msg").textContent = "정비할 차량을 1대 이상 선택하세요."; return; } L2.ran = true; l2Render(); };
+[0, 1, 2].forEach(i => $("l2-f" + i).addEventListener("change", () => { $("l2-auto").disabled = true; L2.model = null; L2.losses = []; l2LossDraw(); $("l2-weights").innerHTML = ""; $("l2-train-info").textContent = "센서 구성이 바뀌었습니다. 다시 학습하세요."; l2Render(); }));
+redraw.lab2 = () => { l2LossDraw(); };
+
+// =====================================================================
+// LAB 3  데이터 오염 · 적대적 공격
+// =====================================================================
+const L3 = { W: 640, H: 400, seed: 3, train: [], test: [] };
+const C_T = [.66, .62], C_N = [.36, .38];
+function l3Gen() {
+  const r = rng(L3.seed * 977);
+  const blob = (c, s, y, n) => Array.from({ length: n }, () => ({ x: clamp(c[0] + gauss(r) * s, .02, .98), y: clamp(c[1] + gauss(r) * s, .02, .98), label: y, true: y }));
+  L3.train = [...blob(C_T, .11, 1, 80), ...blob(C_N, .12, 0, 80)];
+  L3.test = [...blob(C_T, .11, 1, 100), ...blob(C_N, .12, 0, 100)];
+  L3.r = r;
+}
+function knn(pts, x, y, k, skip) {
+  const d = [];
+  for (const p of pts) { if (p === skip) continue; d.push([(p.x - x) ** 2 + (p.y - y) ** 2, p.label]); }
+  d.sort((a, b) => a[0] - b[0]);
+  let s = 0; const kk = Math.min(k, d.length); for (let i = 0; i < kk; i++) s += d[i][1];
+  return s / kk;
+}
+function l3Build() {
+  const mode = document.querySelector('input[name="l3-mode"]:checked').value, p = +$("l3-p").value / 100;
+  const r = rng(L3.seed * 31 + 7);
+  let train = L3.train.map(o => ({ ...o, poison: false, removed: false }));
+  if (mode === "random") {
+    const n = Math.round(train.length * p);
+    const idx = train.map((_, i) => i).sort(() => r() - .5).slice(0, n);
+    idx.forEach(i => { train[i].label = 1 - train[i].label; train[i].poison = true; });
+  } else {
+    const n = Math.round(train.length * p);
+    for (let i = 0; i < n; i++) train.push({ x: clamp(.7 + gauss(r) * .07, .02, .98), y: clamp(.66 + gauss(r) * .07, .02, .98), label: 0, true: 1, poison: true, removed: false });
+  }
+  if ($("l3-clean").checked) for (const o of train) o.removed = Math.round(knn(train, o.x, o.y, 5, o)) !== o.label;
+  return train;
+}
+function l3Draw() {
+  const train = l3Build(), used = train.filter(o => !o.removed), K = 7;
+  const eps = +$("l3-eps").value;
+  const cv = $("l3-cv"), ctx = fit(cv, L3.W, L3.H);
+  const X = v => v * L3.W, Y = v => (1 - v) * L3.H;
+  // decision region
+  const gx = 96, gy = 60, cw = L3.W / gx, ch = L3.H / gy;
+  for (let i = 0; i < gx; i++) for (let j = 0; j < gy; j++) {
+    const px = (i + .5) / gx, py = 1 - (j + .5) / gy, v = knn(used, px, py, K);
+    ctx.fillStyle = v >= .5 ? `rgba(217,150,42,${.18 + (v - .5) * .5})` : `rgba(62,138,99,${.18 + (.5 - v) * .5})`;
+    ctx.fillRect(Math.floor(i * cw), Math.floor(j * ch), Math.ceil(cw) + 1, Math.ceil(ch) + 1);
+  }
+  // axes ticks
+  ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 1;
+  for (let t = .25; t < 1; t += .25) { ctx.beginPath(); ctx.moveTo(X(t), 0); ctx.lineTo(X(t), L3.H); ctx.moveTo(0, Y(t)); ctx.lineTo(L3.W, Y(t)); ctx.stroke(); }
+  // train points
+  for (const o of train) {
+    const c = o.label ? "#d9962a" : "#3e8a63";
+    if (o.removed) { ctx.strokeStyle = "rgba(120,120,120,.9)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(o.x), Y(o.y), 4.5, 0, 7); ctx.stroke(); continue; }
+    if (o.poison) { ctx.strokeStyle = c; ctx.lineWidth = 2.5; const x = X(o.x), y = Y(o.y); ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); continue; }
+    ctx.fillStyle = c; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(o.x), Y(o.y), 4, 0, 7); ctx.fill(); ctx.stroke();
+  }
+  // test with adversarial perturbation on targets
+  let correct = 0, tHit = 0, tN = 0;
+  const showTest = $("l3-test").checked;
+  for (const o of L3.test) {
+    let x = o.x, y = o.y;
+    if (o.true === 1 && eps > 0) { const dx = C_N[0] - C_T[0], dy = C_N[1] - C_T[1], n = Math.hypot(dx, dy); x += dx / n * eps; y += dy / n * eps; }
+    const pred = knn(used, x, y, K) >= .5 ? 1 : 0, ok = pred === o.true;
+    correct += ok; if (o.true) { tN++; tHit += pred; }
+    if (!showTest) continue;
+    if (o.true && eps > 0) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(o.x), Y(o.y)); ctx.lineTo(X(x), Y(y)); ctx.stroke(); }
+    ctx.fillStyle = o.true ? "#f0c060" : "#7fc79c"; ctx.strokeStyle = ok ? "rgba(0,0,0,.5)" : "#ff3b2a"; ctx.lineWidth = ok ? 1 : 2.2;
+    const px = X(x), py = Y(y); ctx.beginPath(); ctx.moveTo(px, py - 5); ctx.lineTo(px + 4.5, py + 3.5); ctx.lineTo(px - 4.5, py + 3.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  const pois = train.filter(o => o.poison).length, rem = train.filter(o => o.removed).length, remP = train.filter(o => o.removed && o.poison).length;
+  const acc = correct / L3.test.length, rec = tHit / tN;
+  $("l3-stats").innerHTML = stat("시험 정확도", pct(acc), "전체 200건", acc < .8 ? "bad" : "good") + stat("표적 탐지율", pct(rec), "실제 표적 100건 중", rec < .8 ? "bad" : "good") + stat("오염 샘플", pois, "학습 데이터 내") + stat("정제로 제거", rem, rem ? `그중 오염 ${remP}건` : "정제 꺼짐");
+}
+["l3-p", "l3-eps"].forEach(id => $(id).addEventListener("input", e => { $(id + "-o").textContent = id === "l3-p" ? e.target.value + "%" : (+e.target.value).toFixed(2); l3Draw(); }));
+document.querySelectorAll('input[name="l3-mode"], #l3-clean, #l3-test').forEach(el => el.addEventListener("change", l3Draw));
+$("l3-new").onclick = () => { L3.seed++; l3Gen(); l3Draw(); };
+redraw.lab3 = l3Draw;
+
+// =====================================================================
+// LAB 4  결심지원 시나리오
+// =====================================================================
+const SCN = [
+  { tag: "해상 감시", title: "야간 미식별 고속 선박 접근",
+    sit: "02:40, 해안 감시 레이더에 미식별 선박 1척이 탐지되었다. 연안 경계선까지 약 6해리 남았다.",
+    act: "적 고속정으로 판단, 경고사격 준비 권고", conf: .91,
+    ev: ["속도 32노트로 고속 접근", "선박자동식별장치(AIS) 신호 없음", "과거 침투 사례와 항적 패턴 유사"],
+    extra: "현재 해당 해역은 꽃게 조업 기간이며, 소형 어선이 AIS를 끈 채 조업하는 사례가 잦다. 레이더 반사 면적은 소형 어선 수준이다. 열상 장비로 확인하려면 약 4분이 필요하다.",
+    best: 1,
+    fb: ["승인: AI 근거(속도, AIS 없음)는 어선과도 일치합니다. 신뢰도 0.91은 학습 데이터 기준 수치이지 이 상황의 확실성이 아닙니다. 확인 시간이 있는데 쓰지 않았습니다.",
+         "보류·추가 확인: 최선입니다. 시간 여유(약 6해리)가 있고 민간 선박일 가능성이 있습니다. 열상 확인과 경고 통신을 먼저 하는 것이 교전규칙과 비례성 원칙에 부합합니다.",
+         "거부: 위협 가능성을 배제할 근거도 없습니다. 추천을 버리기보다 확인 절차로 전환해야 합니다."],
+    principle: "신뢰도 수치와 상황적 확실성은 다르다" },
+  { tag: "항공 정비", title: "헬기 2호기 비행 중지 권고",
+    sit: "07:10, 2시간 뒤 정기 수송 임무가 예정된 헬기 2호기에 대해 정비 AI가 경고를 냈다.",
+    act: "2호기 비행 중지 및 주 기어박스 점검 권고", conf: .83,
+    ev: ["주 기어박스 진동이 최근 3회 비행 동안 연속 상승", "오일 금속 입자 센서 수치 기준치 근접", "동일 패턴을 보인 과거 사례 중 다수가 2주 내 부품 교체"],
+    extra: "대체 헬기 4호기를 즉시 투입할 수 있다. 임무는 정기 물자 수송으로 긴급성이 낮다. 센서는 지난달 교정되었다.",
+    best: 0,
+    fb: ["승인: 최선입니다. 근거가 여러 센서에서 일관되고, 대체 수단이 있어 비용이 낮으며, 잘못 판단했을 때의 피해(비행 중 고장)는 매우 큽니다. AI를 따를지 말지는 '틀렸을 때 비용'으로 판단합니다.",
+         "보류·추가 확인: 나쁘지 않지만 이미 근거가 충분하고 대체 수단도 있어 지연할 이유가 약합니다. 과잉 의심도 비용입니다.",
+         "거부: 위험합니다. 근거가 일관되고 교정된 센서인데 추천을 무시하면 안전 사고로 이어질 수 있습니다."],
+    principle: "AI를 의심하는 것만이 능사는 아니다. 오류 비용이 비대칭이면 안전 측으로" },
+  { tag: "영상 분석", title: "적 포병 진지 의심 지역",
+    sit: "1월, 위성 영상 자동분석 AI가 산악 지역에서 위장된 포병 진지를 탐지했다고 보고했다.",
+    act: "좌표 확정 및 화력 표적 목록 등록 권고", conf: .78,
+    ev: ["포상 형태의 원형 지형 3개", "주변 차량 이동 흔적", "위장망으로 추정되는 질감"],
+    extra: "이 모델은 여름철 영상으로만 학습되었다. 현재 해당 지역은 적설 상태이며, 같은 지역에는 민간 채석장이 있다고 지도에 표시되어 있다.",
+    best: 1,
+    fb: ["승인: 학습 데이터(여름)와 현재 조건(적설)이 달라 성능이 보장되지 않습니다. 데이터 분포 변화를 고려하지 않았습니다.",
+         "보류·추가 확인: 최선입니다. 분포 변화와 민간 시설 가능성이 있어 다른 출처(신호정보, 정찰 자산)로 교차 확인해야 합니다. 표적 목록 등록은 되돌리기 어려운 결정입니다.",
+         "거부: 탐지 자체가 틀렸다고 단정할 근거는 없습니다. 위협 가능성을 열어두고 확인 절차를 밟아야 합니다."],
+    principle: "학습 조건과 운용 조건이 다르면 성능을 믿을 수 없다" },
+  { tag: "사이버 방호", title: "내부 서버의 비정상 외부 전송",
+    sit: "03:15, 사이버 이상탐지 AI가 행정망 파일 서버에서 비정상 트래픽을 탐지했다.",
+    act: "해당 서버 네트워크 즉시 격리 권고", conf: .95,
+    ev: ["새벽 시간대 4GB 규모 외부 전송", "목적지는 등록되지 않은 해외 IP", "전송 직전 관리자 계정 로그인 실패 12회"],
+    extra: "백업 작업은 매일 01:00에 끝나며 외부로 전송하지 않는다. 서버를 격리하면 오전 업무 일부가 지연되지만 데이터는 보존된다.",
+    best: 0,
+    fb: ["승인: 최선입니다. 여러 근거가 침해를 가리키고, 격리는 되돌릴 수 있는 조치이며, 지연 비용보다 유출 확산 피해가 훨씬 큽니다. 격리 후 분석하면 됩니다.",
+         "보류·추가 확인: 확인하는 동안 유출이 계속됩니다. 가역적이고 피해가 작은 조치는 먼저 실행하고 확인을 병행합니다.",
+         "거부: 근거가 일관되고 반대 근거가 없습니다. 거부할 이유가 없습니다."],
+    principle: "가역적이고 저비용인 방어 조치는 신속히" },
+  { tag: "군수 지원", title: "보급로 선정",
+    sit: "전방 부대에 탄약과 식량을 수송해야 한다. 경로 최적화 AI가 가장 빠른 경로를 추천했다.",
+    act: "B 경로(하천 교량 경유) 추천, 예상 소요 1시간 40분", conf: .88,
+    ev: ["A 경로 대비 35분 단축", "교량 하중 등급 충분", "최근 적 활동 보고 없음"],
+    extra: "AI가 사용한 도로·교량 데이터의 기준일은 6개월 전이다. 어제 공병대가 집중호우로 B 경로 교량 상판 손상을 보고했다.",
+    best: 2,
+    fb: ["승인: AI 근거의 핵심(교량 하중 등급)이 이미 사실과 다릅니다. 오래된 데이터로 낸 추천을 그대로 따른 것입니다.",
+         "보류·추가 확인: 이미 교량 손상이 확인된 만큼 보류보다는 추천을 거부하고 대안 경로로 바로 전환하는 것이 맞습니다.",
+         "거부: 최선입니다. AI의 판단 근거가 오래된 데이터에 기반해 틀렸음이 확인되었습니다. 대안 경로(A)를 지정하고 데이터 갱신을 요청합니다."],
+    principle: "AI의 근거가 틀렸다면 신뢰도가 높아도 거부한다" },
+  { tag: "방공", title: "미식별 소형 드론 3기",
+    sit: "14:20, 기지 북측 4km 지점에서 소형 드론 3기가 접근 중이다. 방공 AI가 요격을 권고했다.",
+    act: "적대 드론으로 판단, 전자전 재밍 및 요격 준비 권고", conf: .64,
+    ev: ["3기가 편대 형태로 비행", "기지 방향으로 일정 속도 이동", "제조사 식별 신호 불일치"],
+    extra: "기지 인근 공원에서 오늘 지역 축제가 열리고 있다. 오늘 해당 공역 드론 촬영 승인 신고가 1건 접수되어 있다. 현재 속도라면 기지 도달까지 약 6분이 남았다.",
+    best: 1,
+    fb: ["승인: 신뢰도 0.64는 낮은 편이고 민간 드론일 가능성(축제, 촬영 신고)이 큽니다. 재밍은 민간 통신에도 영향을 줄 수 있습니다.",
+         "보류·추가 확인: 최선입니다. 6분의 여유가 있으므로 신고된 촬영 업체와 연락하고 육안·광학 확인을 하는 동안 대응 태세는 유지합니다. 사람의 판단이 들어갈 시간이 있을 때는 써야 합니다.",
+         "거부: 실제 위협일 가능성이 남아 있습니다. 대응 태세를 해제하기보다 확인 절차를 밟아야 합니다."],
+    principle: "치명적·비가역적 조치일수록, 시간이 허락하는 한 인간이 확인한다" },
+];
+const L4 = { i: 0, picks: [], extra: [] };
+function l4Render() {
+  $("l4-prog").innerHTML = SCN.map((_, i) => `<span class="${i < L4.picks.length ? "done" : i === L4.i ? "cur" : ""}"></span>`).join("");
+  const pts = L4.picks.reduce((s, p, i) => s + (p === SCN[i].best ? 2 : 0), 0);
+  $("l4-score").textContent = `${L4.picks.length}/${SCN.length} 완료 · 최선 판단 ${L4.picks.filter((p, i) => p === SCN[i].best).length}개 · 추가 정보 확인 ${L4.extra.filter(Boolean).length}회`;
+  if (L4.i >= SCN.length) return l4Summary();
+  const s = SCN[L4.i], picked = L4.picks[L4.i], showExtra = L4.extra[L4.i];
+  const labels = [["승인", "AI 추천대로 실행"], ["보류·추가 확인", "실행 전 추가 정보 확보"], ["거부", "추천을 따르지 않음"]];
+  $("l4-card").innerHTML = `
+    <div class="scn-meta"><span class="pill">${L4.i + 1} / ${SCN.length}</span><span class="pill warn">${s.tag}</span></div>
+    <h2>${s.title}</h2>
+    <p style="margin:6px 0 0">${s.sit}</p>
+    <div class="ai-rec">
+      <div class="tag">AI 결심지원 추천</div>
+      <div class="act">${s.act}</div>
+      <div class="conf"><span>신뢰도</span><div class="bar"><span style="width:${s.conf * 100}%;background:var(--accent)"></span></div><span class="mono">${s.conf.toFixed(2)}</span></div>
+      <ul class="ev">${s.ev.map(e => `<li>${e}</li>`).join("")}</ul>
+    </div>
+    ${showExtra ? `<div class="extra"><strong>추가 정보</strong><br>${s.extra}</div>` : `<div class="btns" style="margin-top:12px"><button class="b" id="l4-more" ${picked != null ? "disabled" : ""}>추가 정보 요청</button></div>`}
+    <div class="choices">${labels.map((l, k) => `<button id="l4-c${k}" data-k="${k}" class="${picked === k ? "picked" : ""}" ${picked != null ? "disabled" : ""}><strong>${l[0]}</strong><span class="note">${l[1]}</span></button>`).join("")}</div>
+    ${picked != null ? `<div class="fb">${s.fb.map((t, k) => `<div class="${k === s.best ? "best" : ""}">${k === picked ? "▶ " : ""}${t}</div>`).join("")}
+      <p class="callout" style="margin:4px 0 0"><strong>원칙:</strong> ${s.principle}</p>
+      <div class="btns"><button class="b primary" id="l4-next">${L4.i + 1 < SCN.length ? "다음 상황" : "결과 보기"}</button></div></div>` : ""}`;
+  const more = $("l4-more"); if (more) more.onclick = () => { L4.extra[L4.i] = true; l4Render(); };
+  [0, 1, 2].forEach(k => { const b = $("l4-c" + k); if (b) b.onclick = () => { L4.picks[L4.i] = k; l4Render(); }; });
+  const nx = $("l4-next"); if (nx) nx.onclick = () => { L4.i++; l4Render(); $("l4-card").scrollIntoView({ block: "start", behavior: "smooth" }); };
+}
+function l4Summary() {
+  let over = 0, under = 0, best = 0;
+  SCN.forEach((s, i) => { const p = L4.picks[i]; if (p === s.best) best++; else if (p === 0) over++; else under++; });
+  const ex = L4.extra.filter(Boolean).length;
+  let type = "균형형", desc = "AI 추천의 근거를 따져보고 상황에 맞게 수용과 확인을 구분했습니다.";
+  if (over >= 2 && over > under) { type = "AI 과신형"; desc = "AI 추천을 그대로 승인한 경우가 많습니다. 신뢰도 수치보다 근거의 질과 데이터의 시점·조건을 먼저 확인하세요."; }
+  else if (under >= 2) { type = "과잉 의심형"; desc = "근거가 충분한 추천도 보류하거나 거부했습니다. 확인 지연에도 비용이 있습니다. 오류 비용이 비대칭인지, 조치가 되돌릴 수 있는지를 기준으로 판단하세요."; }
+  $("l4-card").innerHTML = `
+    <div class="scn-meta"><span class="pill warn">결과</span></div>
+    <h2>나의 판단 성향: ${type}</h2>
+    <p style="margin:6px 0 14px">${desc}</p>
+    <div class="stats">${stat("최선 판단", `${best}/${SCN.length}`, "", best >= 5 ? "good" : "")}${stat("AI 과신", over, "잘못된 승인")}${stat("과잉 의심", under, "불필요한 보류·거부")}${stat("추가 정보 확인", `${ex}/${SCN.length}`, "확인 습관")}</div>
+    <div class="tbl-wrap" style="margin-top:16px"><table><thead><tr><th>상황</th><th>AI 신뢰도</th><th>내 판단</th><th>최선</th></tr></thead><tbody>
+    ${SCN.map((s, i) => { const n = ["승인", "보류", "거부"]; const ok = L4.picks[i] === s.best; return `<tr><td>${s.title}</td><td class="mono">${s.conf.toFixed(2)}</td><td><span class="pill ${ok ? "ok" : "bad"}">${n[L4.picks[i]]}</span></td><td>${n[s.best]}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <p class="callout" style="margin:16px 0 0">토의: AI 신뢰도가 가장 높았던 상황(0.95)과 가장 낮았던 상황(0.64)에서 최선의 판단은 각각 무엇이었나요? 신뢰도 숫자만으로 판단할 수 없는 이유를 조별로 정리해 보세요.</p>`;
+}
+$("l4-restart").onclick = () => { L4.i = 0; L4.picks = []; L4.extra = []; l4Render(); };
+
+// ---------- boot ----------
+l1Generate(); l2Data(); l2Fleet(); l3Gen(); l4Render();
+const initial = (location.hash || "").slice(1);
+showTab(["lab1", "lab2", "lab3", "lab4"].includes(initial) ? initial : (store("dai-tab") || "lab1"));
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { const t = tabs.find(b => b.getAttribute("aria-selected") === "true"); redraw[t.dataset.tab] && redraw[t.dataset.tab](); }, 120); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { const t = tabs.find(b => b.getAttribute("aria-selected") === "true"); redraw[t.dataset.tab] && redraw[t.dataset.tab](); });
+</script>
