@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 에이전트 실습</title>
+<meta name="description" content="생각 → 도구 호출 → 관찰을 반복하는 AI 에이전트 루프를 브라우저에서 단계별로 실습합니다.">
+<style>
+  :root {
+    --bg: #f6f7f4; --surface: #ffffff; --ink: #1c2420; --muted: #5d6a63;
+    --line: #dde2dc; --accent: #2f5d46; --accent-ink: #ffffff; --chip: #e8efe9;
+    --think: #3b5b8a; --act: #8a5a14; --obs: #2f5d46; --warn-bg: #fff4e0; --warn: #8a5a14;
+    --code: #eef1ed;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614; --surface: #1a201d; --ink: #e6ebe7; --muted: #9aa69f;
+      --line: #2c3530; --accent: #7fbf9a; --accent-ink: #0f1712; --chip: #23302a;
+      --think: #8fb2e6; --act: #e2b462; --obs: #7fbf9a; --warn-bg: #2e2617; --warn: #e2b462;
+      --code: #151a17;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.65 "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 40px 0 24px; border-bottom: 1px solid var(--line); }
+  header a.back { color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 600; }
+  h1 { font-size: clamp(26px, 4vw, 36px); margin: 8px 0; letter-spacing: -.02em; }
+  header p { color: var(--muted); margin: 0; max-width: 680px; }
+  section { padding: 28px 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 19px; margin: 0 0 12px; }
+  .loop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-weight: 600; font-size: 14px; }
+  .loop span { padding: 6px 12px; border-radius: 99px; background: var(--chip); }
+  .loop .t { color: var(--think); } .loop .a { color: var(--act); } .loop .o { color: var(--obs); }
+  .goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .goal { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+          padding: 14px; font: inherit; color: inherit; cursor: pointer; }
+  .goal[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .goal small { display: block; color: var(--muted); font-size: 13px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  button.btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: transparent;
+               color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+  button.btn.primary { background: var(--accent); color: var(--accent-ink); }
+  button.btn:disabled { opacity: .4; cursor: default; }
+  label.opt { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+  .trace { display: grid; gap: 10px; }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .step .n { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .row { margin-top: 4px; font-size: 14px; word-break: break-word; }
+  .row b { display: inline-block; min-width: 44px; }
+  .row.t b { color: var(--think); } .row.a b { color: var(--act); } .row.o b { color: var(--obs); }
+  .row code, pre { font-family: Consolas, "D2Coding", monospace; font-size: 13px; }
+  .row code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  .approve { margin-top: 10px; padding: 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: 14px; }
+  .approve .btns { display: flex; gap: 8px; margin-top: 8px; }
+  .answer { border-color: var(--accent); }
+  .answer pre { white-space: pre-wrap; margin: 6px 0 0; font-family: inherit; font-size: 15px; }
+  .empty { color: var(--muted); font-size: 14px; }
+  pre.src { background: var(--code); border: 1px solid var(--line); border-radius: 10px; padding: 14px;
+            overflow-x: auto; margin: 0; line-height: 1.5; }
+  ul.q { margin: 0; padding-left: 20px; color: var(--muted); }
+  footer { padding: 28px 0 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="back" href="index.html">← 국방 AI 교육 홈</a>
+    <h1>AI 에이전트 실습</h1>
+    <p>에이전트는 목표를 받으면 스스로 다음 행동을 정하고, 도구를 호출해 결과를 관찰하는 과정을 반복합니다. 목표를 고르고 한 단계씩 진행하며 그 흐름을 확인하세요.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <div class="loop" aria-label="에이전트 루프">
+      <span>목표</span>→<span class="t">생각</span>→<span class="a">행동(도구 호출)</span>→<span class="o">관찰</span>→<span class="t">생각</span>… →<span>최종 답변</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>1. 목표 선택</h2>
+    <div class="goals" id="goals"></div>
+    <div class="controls">
+      <button class="btn primary" id="stepBtn">다음 단계 ▶</button>
+      <button class="btn" id="runBtn">끝까지 실행</button>
+      <button class="btn" id="resetBtn">처음부터</button>
+      <label class="opt">최대 단계 <select id="maxSteps"><option>2</option><option>4</option><option selected>6</option></select></label>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 실행 과정</h2>
+    <div class="trace" id="trace"><p class="empty">‘다음 단계’를 누르면 에이전트가 움직이기 시작합니다.</p></div>
+  </section>
+
+  <section>
+    <h2>3. 생각해 볼 점</h2>
+    <ul class="q">
+      <li>최대 단계를 2로 줄이면 어떻게 되나요? 실제 에이전트에 단계 제한이 꼭 필요한 이유는?</li>
+      <li>보급 요청에서 ‘거부’를 누르면 최종 답변이 어떻게 달라지나요?</li>
+      <li>정보 보고서 요약에서 신뢰도가 낮은 SNS 첩보는 어떻게 다뤄야 할까요?</li>
+      <li>여기의 ‘두뇌’는 정해진 규칙입니다. 이 자리에 LLM(Claude)을 넣으면 무엇이 좋아지고, 어떤 위험이 생길까요?</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. 같은 구조를 Python으로</h2>
+    <p class="empty" style="margin-top:0">전체 코드: <a style="color:var(--accent)" href="agent-labs/lab1_agent_loop.py">lab1_agent_loop.py</a>(규칙 기반) · <a style="color:var(--accent)" href="agent-labs/lab2_claude_agent.py">lab2_claude_agent.py</a>(Claude 연동) · <a style="color:var(--accent)" href="agent-labs/README.md">실습 안내</a></p>
+<pre class="src">for step in range(1, MAX_STEPS + 1):
+    decision = brain(goal, history)          # 생각: 다음 행동 결정
+    if "answer" in decision:
+        return decision["answer"]            # 최종 답변
+    result = TOOLS[decision["tool"]](**decision["args"])   # 행동: 도구 호출
+    history.append({..., "result": result})  # 관찰: 결과를 기억에 추가</pre>
+  </section>
+</main>
+
+<footer class="wrap">모든 데이터는 교육용 가상 데이터이며 실제 부대·장비 정보와 무관합니다. · 실행 행위의 최종 결정은 사람이 합니다.</footer>
+
+<script>
+// agent-labs/data/*.json 과 동일한 교육용 가상 데이터 (로컬 파일로 열어도 동작하도록 내장)
+const DATA = {
+  inventory: {
+    units: {
+      "1대대": {"전투식량": 820, "연료_L": 12000, "배터리": 140, "의약품키트": 35},
+      "2대대": {"전투식량": 310, "연료_L": 4200, "배터리": 60, "의약품키트": 12},
+      "3대대": {"전투식량": 1500, "연료_L": 18500, "배터리": 210, "의약품키트": 48}
+    },
+    daily_consumption: {"전투식량": 180, "연료_L": 2100, "배터리": 25, "의약품키트": 4},
+    safety_days: 3
+  },
+  vehicles: [
+    {id: "V-101", type: "전술차량", km_since_service: 9800, engine_temp_avg: 96, vibration: 0.42, last_fault: "없음"},
+    {id: "V-102", type: "전술차량", km_since_service: 4200, engine_temp_avg: 88, vibration: 0.21, last_fault: "없음"},
+    {id: "V-203", type: "수송트럭", km_since_service: 14100, engine_temp_avg: 104, vibration: 0.67, last_fault: "냉각수 경고"},
+    {id: "V-204", type: "수송트럭", km_since_service: 7600, engine_temp_avg: 91, vibration: 0.35, last_fault: "없음"},
+    {id: "V-305", type: "구난차량", km_since_service: 11900, engine_temp_avg: 99, vibration: 0.55, last_fault: "유압 저하"}
+  ],
+  reports: [
+    {id: "R-01", time: "06:10", source: "관측소 A", text: "북측 도로에서 미확인 차량 3대 이동 관측. 안개로 식별 제한.", trust: "중"},
+    {id: "R-02", time: "06:45", source: "드론 정찰", text: "동일 도로에서 민간 화물차 2대 확인. 군용 표식 없음.", trust: "상"},
+    {id: "R-03", time: "07:20", source: "SNS 첩보", text: "해당 지역 대규모 병력 이동 소문. 출처 불명.", trust: "하"},
+    {id: "R-04", time: "07:55", source: "관측소 B", text: "교량 인근 통행량 평시 수준. 특이사항 없음.", trust: "상"}
+  ]
+};
+
+// 도구 — agent-labs/tools.py 와 같은 계산
+const TOOLS = {
+  check_inventory({unit}) {
+    const inv = DATA.inventory, stock = inv.units[unit];
+    if (!stock) return {error: `알 수 없는 부대: ${unit}`};
+    const days = {};
+    for (const k in stock) days[k] = Math.round(stock[k] / inv.daily_consumption[k] * 10) / 10;
+    return {unit, days_left: days, below_safety: Object.keys(days).filter(k => days[k] < inv.safety_days)};
+  },
+  predict_maintenance({threshold = 0.6} = {}) {
+    return DATA.vehicles.map(v => {
+      let s = 0.4 * Math.min(v.km_since_service / 15000, 1)
+            + 0.3 * Math.min(Math.max(v.engine_temp_avg - 85, 0) / 20, 1)
+            + 0.3 * Math.min(v.vibration / 0.8, 1);
+      if (v.last_fault !== "없음") s = Math.min(s + 0.1, 1);
+      s = Math.round(s * 100) / 100;
+      return {id: v.id, type: v.type, risk: s, action: s >= threshold ? "즉시 정비" : "정기 점검"};
+    }).sort((a, b) => b.risk - a.risk);
+  },
+  get_reports() { return DATA.reports; },
+  request_supply({unit, item, amount, approved}) {
+    if (approved === undefined) return {status: "승인 대기", unit, item, amount};
+    return {status: approved ? "요청 완료" : "지휘관 거부", unit, item, amount};
+  }
+};
+
+// 두뇌 — 규칙 기반 (lab1_agent_loop.py 의 mock_brain 과 같은 역할)
+const GOALS = [
+  {key: "supply", title: "보급 재고 점검", desc: "각 대대 재고를 점검하고 부족하면 보급 요청을 준비해줘"},
+  {key: "maint", title: "정비 우선순위", desc: "오늘 정비가 시급한 차량을 알려줘"},
+  {key: "intel", title: "정보 보고서 요약", desc: "오늘 보고서를 신뢰도 기준으로 정리해줘"}
+];
+
+function brain(goal, history) {
+  const used = name => history.filter(h => h.tool === name);
+  if (goal === "supply") {
+    const checked = used("check_inventory").map(h => h.args.unit);
+    const next = ["1대대", "2대대", "3대대"].find(u => !checked.includes(u));
+    if (next) return {thought: `${next} 재고를 확인해야 한다.`, tool: "check_inventory", args: {unit: next}};
+    const short = used("check_inventory").filter(h => h.result.below_safety.length);
+    const req = used("request_supply")[0];
+    if (short.length && !req) {
+      const s = short[0].result;
+      return {thought: `${s.unit}의 ${s.below_safety[0]}이(가) 안전재고(3일) 미달 → 보급 요청 초안을 만든다. 실행은 지휘관 승인이 필요하다.`,
+              tool: "request_supply", args: {unit: s.unit, item: s.below_safety[0], amount: 1000}, needsApproval: true};
+    }
+    const lines = short.map(h => `- ${h.result.unit}: ${h.result.below_safety.join(", ")} 안전재고 미달`);
+    const status = req ? `\n보급 요청(${req.args.unit} ${req.args.item} ${req.args.amount}): ${req.result.status}` : "";
+    return {thought: "필요한 정보를 모두 모았다.", answer: "보급 현황 요약\n" + (lines.join("\n") || "- 모든 부대 안전재고 충족") + status};
+  }
+  if (goal === "maint") {
+    if (!used("predict_maintenance").length) return {thought: "차량별 정비 위험도를 계산해야 한다.", tool: "predict_maintenance", args: {threshold: 0.6}};
+    const r = used("predict_maintenance")[0].result;
+    const urgent = r.filter(v => v.action === "즉시 정비").map(v => `${v.id}(${v.type}, 위험 ${v.risk})`);
+    return {thought: "위험점수 0.6 이상을 즉시 정비로 분류한다.", answer: "즉시 정비 대상: " + (urgent.join(", ") || "없음")
+            + "\n나머지 차량은 정기 점검 일정 유지.\n※ 규칙 기반 점수이므로 정비관의 현장 확인 후 확정."};
+  }
+  if (goal === "intel") {
+    if (!used("get_reports").length) return {thought: "오늘 수집된 보고서부터 확인한다.", tool: "get_reports", args: {}};
+    const r = used("get_reports")[0].result, by = t => r.filter(x => x.trust === t);
+    return {thought: "R-01(미확인 차량)과 R-02(민간 화물차)가 같은 도로를 다룬다. 신뢰도 높은 R-02가 R-01을 설명할 가능성이 있다. R-03은 출처 불명이라 근거로 쓰지 않는다.",
+            answer: "결론: 현재 위협 징후는 확인되지 않음 (추가 확인 권고)\n"
+              + `근거(신뢰도 상): ${by("상").map(x => `${x.id} ${x.source}`).join(", ")}\n`
+              + `확인 필요(중): ${by("중").map(x => `${x.id} ${x.source} — 안개로 식별 제한`).join(", ")}\n`
+              + `참고 제외(하): ${by("하").map(x => `${x.id} ${x.source} — 출처 불명`).join(", ")}\n`
+              + "권고: 06:10 관측 차량에 대해 드론 재정찰로 식별 확인."};
+  }
+}
+
+// 루프 실행 UI
+const $ = id => document.getElementById(id);
+let goal = "supply", history = [], step = 0, finished = false, waiting = null;
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c])); }
+function json(o) { const s = JSON.stringify(o); return esc(s.length > 220 ? s.slice(0, 220) + " …" : s); }
+
+function renderGoals() {
+  $("goals").innerHTML = GOALS.map(g =>
+    `<button class="goal" data-k="${g.key}" aria-pressed="${g.key === goal}"><strong>${g.title}</strong><small>“${g.desc}”</small></button>`).join("");
+  $("goals").querySelectorAll(".goal").forEach(b => b.onclick = () => { goal = b.dataset.k; reset(); });
+}
+
+function reset() {
+  history = []; step = 0; finished = false; waiting = null;
+  renderGoals();
+  $("trace").innerHTML = `<p class="empty">목표: “${GOALS.find(g => g.key === goal).desc}” — ‘다음 단계’를 누르세요.</p>`;
+  sync();
+}
+
+function sync() {
+  $("stepBtn").disabled = $("runBtn").disabled = finished || !!waiting;
+}
+
+function addCard(html, cls = "") {
+  if (step === 1) $("trace").innerHTML = "";
+  const div = document.createElement("div");
+  div.className = "step " + cls; div.innerHTML = html;
+  $("trace").appendChild(div); div.scrollIntoView({block: "nearest", behavior: "smooth"});
+  return div;
+}
+
+function doStep() {
+  if (finished || waiting) return false;
+  step++;
+  if (step > +$("maxSteps").value) {
+    addCard(`<div class="n">중단</div><div class="row">최대 단계(${$("maxSteps").value})에 도달했습니다. 에이전트가 멈추고 사람에게 넘깁니다.</div>`);
+    finished = true; sync(); return false;
+  }
+  const d = brain(goal, history);
+  let html = `<div class="n">단계 ${step}</div><div class="row t"><b>생각</b> ${esc(d.thought)}</div>`;
+  if (d.answer) {
+    addCard(html + `<div class="row"><b>최종 답변</b><pre>${esc(d.answer)}</pre></div>`, "answer");
+    finished = true; sync(); return false;
+  }
+  html += `<div class="row a"><b>행동</b> <code>${d.tool}(${esc(JSON.stringify(d.args))})</code></div>`;
+  if (d.needsApproval) {
+    const card = addCard(html + `<div class="approve">⚠ 실행 행위입니다. 지휘관 승인 없이는 실행되지 않습니다 (Human-in-the-loop).
+      <div class="btns"><button class="btn primary" data-ok="1">승인</button><button class="btn" data-ok="0">거부</button></div></div>`);
+    waiting = d; sync();
+    card.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => {
+      const ok = b.dataset.ok === "1", result = TOOLS[d.tool]({...d.args, approved: ok});
+      card.querySelector(".approve").outerHTML = `<div class="row o"><b>관찰</b> <code>${json(result)}</code></div>`;
+      history.push({tool: d.tool, args: d.args, result});
+      waiting = null; sync();
+    });
+    return false;
+  }
+  const result = TOOLS[d.tool](d.args);
+  addCard(html + `<div class="row o"><b>관찰</b> <code>${json(result)}</code></div>`);
+  history.push({tool: d.tool, args: d.args, result});
+  sync(); return true;
+}
+
+$("stepBtn").onclick = doStep;
+$("runBtn").onclick = () => { while (doStep()); };
+$("resetBtn").onclick = reset;
+$("maxSteps").onchange = reset;
+reset();
+</script>
+</body>
+</html>

@@ -64,6 +64,7 @@
       <p>AI 기초부터 국방 적용 사례, 위험과 윤리까지 강의로 익히고, 설치 없이 브라우저에서 바로 실행되는 시뮬레이터로 직접 실습합니다.</p>
       <div class="cta">
         <a class="btn primary" href="simulator.html">실습 시뮬레이터 열기</a>
+        <a class="btn primary" href="agent-lab.html">AI 에이전트 실습</a>
         <a class="btn" href="materials/defense-ai-lecture.pptx" download>강의자료 받기 (PPTX)</a>
       </div>
     </div>
@@ -77,7 +78,7 @@
         <li><strong>1. AI 기초</strong><span>AI·머신러닝·딥러닝의 관계, 세 가지 학습 방식, 개발·운용 생명주기</span></li>
         <li><strong>2. 국방 AI 적용 분야</strong><span>감시정찰, 지휘결심 지원, 예측정비, 생성형 AI 활용과 성능 지표</span></li>
         <li><strong>3. 위험·윤리·보안</strong><span>데이터 오염과 적대적 공격, 인간 통제의 세 수준, 책임 있는 AI 5대 원칙</span></li>
-        <li><strong>4. 실습</strong><span>브라우저 시뮬레이터로 4개 실습 진행</span></li>
+        <li><strong>4. 실습</strong><span>브라우저 시뮬레이터 4개 실습 + AI 에이전트 실습 3단계</span></li>
       </ol>
     </section>
 
@@ -89,6 +90,16 @@
         <div class="card"><span class="chip">실습 2 · 45분</span><h3>차량 예측정비</h3><p>모델을 학습시켜 고장 확률을 예측하고, 정비 슬롯을 배정해 30일 운용을 시뮬레이션합니다.</p></div>
         <div class="card"><span class="chip">실습 3</span><h3>데이터 오염과 적대적 공격</h3><p>오염된 학습 데이터와 위장 패턴이 모델 판단을 어떻게 왜곡하는지 확인합니다.</p></div>
         <div class="card"><span class="chip">실습 4</span><h3>AI 결심지원 시나리오</h3><p>가상 상황 6개에서 AI 추천과 근거를 보고 지휘관으로서 승인·보류·거부를 판단합니다.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>AI 에이전트 실습</h2>
+      <p class="lead">에이전트가 ‘생각 → 도구 호출 → 관찰’을 반복하며 보급·정비·정보 업무를 처리하는 과정을 실습합니다. <a href="agent-labs/README.md" style="color:var(--accent)">실습 안내 →</a></p>
+      <div class="grid">
+        <div class="card"><span class="chip">실습 A · 브라우저</span><h3><a href="agent-lab.html" style="color:inherit">에이전트 루프 체험</a></h3><p>목표를 고르고 한 단계씩 진행하며 에이전트의 판단과 도구 호출을 관찰합니다. 보급 요청은 지휘관 승인/거부를 직접 선택합니다.</p></div>
+        <div class="card"><span class="chip">실습 B · Python</span><h3><a href="agent-labs/lab1_agent_loop.py" style="color:inherit">규칙 기반 에이전트</a></h3><p>API 키 없이 실행합니다. 루프 구조, 최대 단계 제한, 승인 대기 처리를 코드로 익힙니다.</p></div>
+        <div class="card"><span class="chip">실습 C · Python + Claude</span><h3><a href="agent-labs/lab2_claude_agent.py" style="color:inherit">Claude 도구 사용 에이전트</a></h3><p>Claude가 도구 설명을 읽고 스스로 호출합니다. 실행 행위는 터미널에서 사람이 승인해야 진행됩니다.</p></div>
       </div>
     </section>
 
