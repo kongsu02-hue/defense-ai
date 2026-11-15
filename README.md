@@ -14,7 +14,7 @@
 | `practice.html` | 앱 개발 실습 4개 + 종합 과제 |
 | `agent-labs/` | Python 에이전트 3종 |
 | `practice/` | 실습 파일 (요구사항, 테스트, 가상 데이터, 참고 답안) |
-| `cmmc/index.html` | CMMC 레벨 1 실습 시뮬레이터: 범위 정의 → 가상 PowerShell 점검·조치 → 설정·문서 작업 → 증거 → 자체평가 → SPRS 제출 모의 |
+| `cmmc/index.html` | CMMC 레벨 1 실습 시뮬레이터: 범위 정의 → 가상 PowerShell 점검·조치 → 네트워크(망 구성도, 공유기 관리, 외부 포트 스캔, 망 분리 시험) → 설정·문서 작업 → 증거 → 자체평가 → SPRS 제출 모의 |
 | `simulator.html` | 부록: AI 모델 개념 시뮬레이터 |
 
 ## AI 에이전트 (`agent-labs/`)

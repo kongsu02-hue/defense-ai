@@ -54,7 +54,8 @@ select,input[type=text],input[type=password],input[type=date]{font:inherit;font-
 .termin span{font:13px Consolas,monospace;color:var(--muted);white-space:nowrap}
 .termin input{flex:1;font:13px Consolas,monospace;padding:7px 9px}
 .layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}
-@media (max-width:820px){.layout{grid-template-columns:1fr}}
+.layout.net{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:820px){.layout,.layout.net{grid-template-columns:1fr}}
 .hints{max-height:500px;overflow:auto}
 .hints details{border-bottom:1px solid var(--line);padding:6px 0}
 .hints summary{cursor:pointer;font-size:.9rem}
@@ -87,9 +88,10 @@ footer{color:var(--muted);font-size:.82rem;padding:20px 0 40px;border-top:1px so
     <button role="tab" data-tab="intro" aria-selected="true">0 안내</button>
     <button role="tab" data-tab="scope">1 범위 정의</button>
     <button role="tab" data-tab="term">2 PC 점검·조치</button>
-    <button role="tab" data-tab="ops">3 설정·문서 작업</button>
-    <button role="tab" data-tab="assess">4 자체평가</button>
-    <button role="tab" data-tab="submit">5 SPRS 제출</button>
+    <button role="tab" data-tab="net">3 네트워크</button>
+    <button role="tab" data-tab="ops">4 설정·문서 작업</button>
+    <button role="tab" data-tab="assess">5 자체평가</button>
+    <button role="tab" data-tab="submit">6 SPRS 제출</button>
   </nav>
 </div></header>
 
@@ -112,13 +114,15 @@ footer{color:var(--muted);font-size:.82rem;padding:20px 0 40px;border-top:1px so
         <li>직원: 김대표(kim), 이과장(lee), 최사원(choi). 박대리(park)는 지난달 퇴사</li>
         <li>공용 계정 office를 사무실에서 같이 씀</li>
         <li>발주 메일로 받은 납품일정(FCI)을 김대표 PC에서 작성하고 공유 폴더·USB로 주고받음</li>
+        <li>사무실 공유기 하나에 업무 PC, NAS, 복합기, 회사 소개 웹서버, 손님 Wi-Fi가 모두 연결되어 있음</li>
         <li>당신은 김대표 PC에 로그인한 상태 (PS C:\Users\kim)</li>
       </ul></div>
     <div class="card"><h3>진행 방법</h3>
       <ol style="margin:0;padding-left:18px;font-size:.92rem">
         <li><b>범위 정의</b>: FCI가 닿는 자산 고르기</li>
         <li><b>PC 점검·조치</b>: PowerShell 명령으로 확인하고 고치기. <code>| Out-File 파일명</code>으로 증거 저장</li>
-        <li><b>설정·문서 작업</b>: 공유기·메일·업데이트, 절차서와 기록부</li>
+        <li><b>네트워크</b>: 공유기 관리 화면에서 미승인 장치, 포트포워딩, Wi-Fi, 망 분리를 점검·조치</li>
+        <li><b>설정·문서 작업</b>: 메일·업데이트, 절차서와 기록부</li>
         <li><b>자체평가</b>: 15개를 직접 판정</li>
         <li><b>SPRS 제출</b>: 모두 충족해야 제출 가능</li>
       </ol></div>
@@ -151,8 +155,27 @@ footer{color:var(--muted);font-size:.82rem;padding:20px 0 40px;border-top:1px so
   </div>
 </section>
 
+<section class="panel" id="p-net" hidden>
+  <h2>3. 네트워크</h2>
+  <p class="sub">가상정밀(주)의 공유기 관리 화면입니다. 망 구성도를 보고 위험한 연결을 찾아 고친 뒤, <b>외부 포트 스캔</b>과 <b>분리 시험</b>으로 결과를 확인하고 증거를 남기세요. 구성도는 설정에 따라 바뀝니다.</p>
+  <div class="card" style="margin-bottom:12px"><h3>망 구성도</h3><div id="topo" style="max-width:860px"></div>
+    <div class="muted" style="font-size:.8rem">빨간 점선: 인터넷에서 들어오는 포트포워딩 · ⚠ 빨간 장치: 미승인·위험 · ⛔ 회색: 차단됨 · 빨간 테두리: 분리 안 됨</div></div>
+  <div class="layout net">
+    <div>
+      <div class="card"><h3>점검 도구</h3>
+        <p style="margin:0 0 6px"><button class="btn small" data-net="scan">🔍 외부 포트 스캔 (인터넷에서 본 우리 회사)</button></p>
+        <p style="margin:0 0 6px"><button class="btn small" data-net="t-guest">🧪 분리 시험: 손님 Wi-Fi 노트북 → NAS 192.168.10.20:445</button></p>
+        <p style="margin:0 0 6px"><button class="btn small" data-net="t-web">🧪 분리 시험: 공개 웹서버 → NAS 192.168.10.20:445</button></p>
+        <pre class="term" id="netOut" style="height:190px"></pre>
+        <button class="btn ghost small" data-netev="tools">📸 점검 결과를 증거로 저장</button>
+        <div class="msg" id="netToolMsg"></div></div>
+    </div>
+    <div id="router"></div>
+  </div>
+</section>
+
 <section class="panel" id="p-ops" hidden>
-  <h2>3. 설정·문서 작업</h2>
+  <h2>4. 설정·문서 작업</h2>
   <p class="sub">명령으로 할 수 없는 조치입니다. 완료한 뒤 <b>📸 증거 저장</b>을 누르세요.</p>
   <div class="grid" id="ops"></div>
 </section>
@@ -186,7 +209,7 @@ footer{color:var(--muted);font-size:.82rem;padding:20px 0 40px;border-top:1px so
 
 <script>
 "use strict";
-const KEY = "cmmc-l1-sim-v1";
+const KEY = "cmmc-l1-sim-v2";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -209,7 +232,30 @@ function newState() {
     shares: ["ADMIN$", "C$", "IPC$", "외부공유"],
     fw: { Domain: true, Private: r(), Public: false },
     router: { remote: true, defaultPw: true },
-    guestSep: false,
+    net: {
+      devices: [
+        { ip: "192.168.10.11", mac: "3C:52:82:1A:0B:11", host: "KIM-PC", vendor: "Dell", seen: "오늘 08:01", truth: "allow", desc: "김대표 업무 PC" },
+        { ip: "192.168.10.12", mac: "3C:52:82:1A:0B:12", host: "LEE-PC", vendor: "Dell", seen: "오늘 08:20", truth: "allow", desc: "이과장 업무 PC" },
+        { ip: "192.168.10.13", mac: "3C:52:82:1A:0B:13", host: "CHOI-PC", vendor: "Dell", seen: "오늘 08:43", truth: "allow", desc: "최사원 업무 PC" },
+        { ip: "192.168.10.20", mac: "00:11:32:9C:44:20", host: "GSJ-NAS", vendor: "Synology", seen: "상시", truth: "allow", desc: "공유 폴더(NAS)" },
+        { ip: "192.168.10.30", mac: "A0:D3:C1:77:10:30", host: "HP-M428", vendor: "HP", seen: "상시", truth: "allow", desc: "복합기" },
+        { ip: "192.168.10.40", mac: "52:54:00:6E:40:40", host: "GSJ-WEB", vendor: "가상머신", seen: "상시", truth: "allow", desc: "회사 소개 웹서버" },
+        { ip: "192.168.10.57", mac: "8C:F5:A3:9B:1F:2C", host: "android-9b1f2c", vendor: "Samsung", seen: "오늘 08:12 (최초 2025-03)", truth: "block", desc: "" },
+        { ip: "192.168.10.61", mac: "3C:21:A9:00:7E:61", host: "ESP_3C21A9", vendor: "Espressif (IoT 모듈)", seen: "상시 (최초 2026-10)", truth: "block", desc: "" },
+      ].map(d => ({ ...d, decide: null })),
+      webInDmz: false,
+      portfw: [
+        { ext: 3389, to: "192.168.10.11:3389", desc: "대표 재택 원격접속", on: true },
+        { ext: 8080, to: "192.168.10.20:80", desc: "NAS 웹 관리 화면", on: r() },
+        { ext: 443, to: "192.168.10.40:443", desc: "회사 소개 웹서버", on: true },
+      ],
+      upnp: true,
+      log: r(),
+      firmware: "1.0.8",
+      wifiSec: "WPA/WPA2 혼합 (TKIP)",
+      wifiPwChanged: false,
+      guestIso: false,
+    },
     winUpdate: false,
     pendingApps: 7 + Math.floor(Math.random() * 6),
     rtp: r(),
@@ -237,23 +283,28 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 const DAILY = ["kim", "lee", "choi"];
 const REQS = [
   { id: "AC.L1-b.1.i", nist: "3.1.1", name: "승인된 사용자·프로세스·장치만 접근",
-    check: s => { const p = []; if (s.users.Guest.enabled) p.push("Guest 계정 활성"); if (s.users.park && s.users.park.enabled) p.push("퇴사자 park 계정 활성"); return p; },
-    hint: ["Get-LocalUser", "Disable-LocalUser -Name \"park\"", "Disable-LocalUser -Name \"Guest\""] },
+    check: s => { const p = []; if (s.users.Guest.enabled) p.push("Guest 계정 활성"); if (s.users.park && s.users.park.enabled) p.push("퇴사자 park 계정 활성");
+      s.net.devices.filter(d => d.truth === "block" && d.decide !== "block").forEach(d => p.push(`미승인 장치 접속 중: ${d.host}`)); return p; },
+    hint: ["Get-LocalUser", "Disable-LocalUser -Name \"park\"", "Disable-LocalUser -Name \"Guest\"", "arp -a"], ops: "네트워크 › 연결된 장치" },
   { id: "AC.L1-b.1.ii", nist: "3.1.2", name: "허용된 거래·기능만 수행 (권한 최소화)",
     check: s => { const p = []; DAILY.forEach(u => { if (s.users[u] && s.users[u].admin) p.push(`업무용 계정 ${u}가 관리자`); });
       if (!Object.entries(s.users).some(([n, u]) => n.startsWith("admin") && u.enabled && u.admin)) p.push("별도 관리자 계정 없음"); return p; },
     hint: ["Get-LocalGroupMember -Group \"Administrators\"", "New-LocalUser -Name \"admin_kim\"", "Add-LocalGroupMember -Group \"Administrators\" -Member \"admin_kim\"", "Remove-LocalGroupMember -Group \"Administrators\" -Member \"kim\""] },
   { id: "AC.L1-b.1.iii", nist: "3.1.20", name: "외부 시스템 연결 확인·통제·제한",
-    check: s => { const p = []; if (s.rdp !== 1) p.push("원격 데스크톱 허용"); if (s.shares.includes("외부공유")) p.push("불필요한 공유 폴더 '외부공유'"); if (!s.docs.extRule) p.push("외부 연결 규칙 미작성"); return p; },
-    hint: ["(Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server').fDenyTSConnections", "Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections -Value 1", "Get-SmbShare", "Remove-SmbShare -Name \"외부공유\""], ops: "외부 시스템 연결 규칙" },
+    check: s => { const p = []; if (s.rdp !== 1) p.push("원격 데스크톱 허용"); if (s.shares.includes("외부공유")) p.push("불필요한 공유 폴더 '외부공유'"); if (!s.docs.extRule) p.push("외부 연결 규칙 미작성");
+      if (s.net.portfw.some(f => f.on && f.ext === 3389)) p.push("인터넷→PC 원격 데스크톱 포트포워딩(3389)"); return p; },
+    hint: ["(Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server').fDenyTSConnections", "Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections -Value 1", "Get-NetTCPConnection -State Listen", "Get-SmbShare", "Remove-SmbShare -Name \"외부공유\""], ops: "외부 시스템 연결 규칙, 네트워크 › 포트 포워딩" },
   { id: "AC.L1-b.1.iv", nist: "3.1.22", name: "공개 시스템 게시 정보 통제",
     check: s => s.docs.posting ? [] : ["게시 승인 절차 미작성"], hint: [], ops: "공개 게시 승인 절차" },
   { id: "IA.L1-b.1.v", nist: "3.5.1", name: "사용자·프로세스·장치 식별",
-    check: s => { const p = []; if (!s.docs.acctMap) p.push("계정-사용자 대응표 미작성"); if (s.users.office && s.users.office.enabled) p.push("공용 계정 office 사용 중"); return p; },
-    hint: ["Get-LocalUser", "Disable-LocalUser -Name \"office\""], ops: "계정-사용자 대응표" },
-  { id: "IA.L1-b.1.vi", nist: "3.5.2", name: "접근 전 인증",
-    check: s => { const p = []; if (s.minpw < 8) p.push(`최소 암호 길이 ${s.minpw} (교육 기준 8 이상)`); if (!s.mfa) p.push("업무 메일 2단계 인증 미적용"); return p; },
-    hint: ["net accounts", "net accounts /minpwlen:12"], ops: "업무 메일 관리" },
+    check: s => { const p = []; if (!s.docs.acctMap) p.push("계정-사용자 대응표 미작성"); if (s.users.office && s.users.office.enabled) p.push("공용 계정 office 사용 중");
+      const und = s.net.devices.filter(d => !d.decide).length; if (und) p.push(`식별하지 않은 네트워크 장치 ${und}대`);
+      s.net.devices.filter(d => d.truth === "allow" && d.decide === "block").forEach(d => p.push(`업무 장치 ${d.host}를 잘못 차단`)); return p; },
+    hint: ["Get-LocalUser", "Disable-LocalUser -Name \"office\"", "arp -a"], ops: "계정-사용자 대응표, 네트워크 › 연결된 장치" },
+  { id: "IA.L1-b.1.vi", nist: "3.5.2", name: "접근 전 인증 (사용자·장치)",
+    check: s => { const p = []; if (s.minpw < 8) p.push(`최소 암호 길이 ${s.minpw} (교육 기준 8 이상)`); if (!s.mfa) p.push("업무 메일 2단계 인증 미적용");
+      if (!/^WPA2-AES|^WPA3/.test(s.net.wifiSec)) p.push(`업무 Wi-Fi 보안 방식 취약: ${s.net.wifiSec}`); if (!s.net.wifiPwChanged) p.push("퇴사자 발생 후 Wi-Fi 암호 미변경"); return p; },
+    hint: ["net accounts", "net accounts /minpwlen:12"], ops: "업무 메일 관리, 네트워크 › Wi-Fi" },
   { id: "MP.L1-b.1.vii", nist: "3.8.3", name: "매체 폐기·재사용 전 완전 삭제",
     check: s => { const p = []; if (!s.cipherE) p.push("실습용 USB(E:) 완전 삭제 안 함"); if (!s.mediaLog.length) p.push("매체 폐기 기록 없음"); return p; },
     hint: ["cipher /w:E:\\"], ops: "매체 폐기 기록부" },
@@ -262,12 +313,15 @@ const REQS = [
   { id: "PE.L1-b.1.ix", nist: "3.10.3~5", name: "방문자 동행·출입 기록·출입 장치 관리",
     check: s => { const p = []; if (!s.docs.visitor) p.push("방문자 처리 절차 미숙지"); if (!s.docs.cards) p.push("출입카드 대장 미정리"); return p; }, hint: [], ops: "방문자 응대 역할극" },
   { id: "SC.L1-b.1.x", nist: "3.13.1", name: "경계에서 통신 감시·통제·보호",
-    check: s => { const p = []; Object.entries(s.fw).forEach(([k, v]) => { if (!v) p.push(`방화벽 ${k} 프로필 꺼짐`); }); if (s.router.remote) p.push("공유기 원격 관리 켜짐"); if (s.router.defaultPw) p.push("공유기 기본 관리자 암호"); return p; },
-    hint: ["Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction", "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True"], ops: "공유기 관리" },
+    check: s => { const p = []; Object.entries(s.fw).forEach(([k, v]) => { if (!v) p.push(`방화벽 ${k} 프로필 꺼짐`); }); if (s.router.remote) p.push("공유기 원격 관리 켜짐"); if (s.router.defaultPw) p.push("공유기 기본 관리자 암호");
+      if (s.net.upnp) p.push("UPnP 켜짐(내부 장치가 임의로 포트 개방)"); if (s.net.portfw.some(f => f.on && f.ext === 8080)) p.push("NAS 관리 화면 인터넷 노출(8080)");
+      if (!s.net.log) p.push("공유기 트래픽·차단 로그 꺼짐(감시 불가)"); return p; },
+    hint: ["Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction", "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True"], ops: "네트워크 › 공유기 관리·포트 포워딩·외부 포트 스캔" },
   { id: "SC.L1-b.1.xi", nist: "3.13.5", name: "공개 접근 구성요소 분리",
-    check: s => s.guestSep ? [] : ["손님 Wi-Fi가 업무망과 같은 네트워크"], hint: [], ops: "공유기 관리" },
+    check: s => { const p = []; if (!s.net.guestIso) p.push("손님 Wi-Fi가 업무망과 같은 네트워크"); if (!s.net.webInDmz) p.push("공개 웹서버가 업무망(192.168.10.0/24)에 있음"); return p; },
+    hint: ["Test-NetConnection -ComputerName 192.168.10.40 -Port 443"], ops: "네트워크 › 서버 배치·Wi-Fi·분리 시험" },
   { id: "SI.L1-b.1.xii", nist: "3.14.1", name: "결함 적시 식별·보고·수정",
-    check: s => { const p = []; if (!s.winUpdate) p.push("Windows 업데이트 미적용"); if (s.pendingApps) p.push(`프로그램 업데이트 ${s.pendingApps}개 대기`); return p; },
+    check: s => { const p = []; if (!s.winUpdate) p.push("Windows 업데이트 미적용"); if (s.pendingApps) p.push(`프로그램 업데이트 ${s.pendingApps}개 대기`); if (s.net.firmware !== "1.2.3") p.push(`공유기 펌웨어 구버전 ${s.net.firmware}`); return p; },
     hint: ["Get-HotFix | Where-Object { $_.InstalledOn } | Sort-Object { [datetime]$_.InstalledOn } -Descending | Select-Object -First 5 HotFixID, InstalledOn", "winget upgrade", "winget upgrade --all"], ops: "Windows 업데이트" },
   { id: "SI.L1-b.1.xiii", nist: "3.14.2", name: "악성코드 방지",
     check: s => s.rtp ? [] : ["실시간 보호 꺼짐"],
@@ -297,6 +351,7 @@ function refresh() {
   $("dScope").textContent = S.scope === true ? "완료" : "미완료";
   $("dSubmit").textContent = S.submitted ? "제출 완료" : "미제출";
   renderOps();
+  renderNet();
 }
 document.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.go)));
@@ -320,7 +375,7 @@ const ASSETS = [
   { n: "공유기·업무 Wi-Fi", in: true, why: "FCI가 지나가는 경계 장치" },
   { n: "직원 개인 휴대폰 — 업무 메일 앱 사용", in: true, why: "메일로 FCI에 접근하므로 범위에 포함" },
   { n: "손님용 Wi-Fi (업무망과 분리 예정)", in: false, why: "분리되어 있으면 FCI가 지나가지 않음. 분리가 전제 조건(SC.L1-b.1.xi)" },
-  { n: "회사 홈페이지 — 외부 호스팅, 공개 정보만", in: false, why: "FCI를 다루지 않음. 단, 게시 통제(AC.L1-b.1.iv) 대상" },
+  { n: "회사 소개 웹서버 — 공개 정보만, DMZ로 옮길 예정", in: false, why: "FCI를 다루지 않는 공개 구성요소. 단, 업무망과 분리(SC.L1-b.1.xi)·게시 통제(AC.L1-b.1.iv)가 전제" },
   { n: "가공 설비 제어 PC — 네트워크 미연결, 도면만 사용", in: false, why: "FCI 없음·네트워크 분리" },
 ];
 function renderScope() {
@@ -371,6 +426,7 @@ function run(cmdRaw) {
       "조치: New-LocalUser, Add-/Remove-LocalGroupMember, Disable-LocalUser, Remove-LocalUser, net accounts /minpwlen:N,",
       "      Set-ItemProperty ... fDenyTSConnections -Value 1, Remove-SmbShare, Set-NetFirewallProfile, winget upgrade --all,",
       "      Set-MpPreference -DisableRealtimeMonitoring $false, Update-MpSignature, Start-MpScan, cipher /w:E:\\",
+      "네트워크: ipconfig, arp -a (Get-NetNeighbor), Get-NetTCPConnection -State Listen, Test-NetConnection -ComputerName IP -Port N",
       "기타: whoami, runas /user:admin_kim powershell, exit, cls",
       "증거: 명령 | Out-File 파일명.txt"].join("\n");
   } else if (lc === "cls" || lc === "clear") { termOut.length = 0; $("term").innerHTML = ""; return; }
@@ -473,7 +529,24 @@ function run(cmdRaw) {
   } else if (/^cipher\s+\/w:(\w):?/i.test(cmd)) {
     const d = cmd.match(/\/w:(\w)/i)[1].toUpperCase();
     if (d !== "E") out = `중지(실습 안전장치): ${d}: 는 실습용 USB가 아닙니다. 드라이브 문자를 다시 확인하세요.`;
-    else { S.cipherE = true; out = "E:\\ 빈 공간 덮어쓰기: 0x00 ... 0xFF ... 난수 ... 완료\n이제 매체 폐기 기록부에 기록하세요 (3. 설정·문서 작업)."; }
+    else { S.cipherE = true; out = "E:\\ 빈 공간 덮어쓰기: 0x00 ... 0xFF ... 난수 ... 완료\n이제 매체 폐기 기록부에 기록하세요 (설정·문서 작업 탭)."; }
+  } else if (/^ipconfig/i.test(cmd)) {
+    out = "이더넷 어댑터 이더넷:\n   IPv4 주소 . . . . . . . . . : 192.168.10.11\n   서브넷 마스크 . . . . . . . : 255.255.255.0\n   기본 게이트웨이 . . . . . . : 192.168.10.1";
+  } else if (/^(arp\s+-a|get-netneighbor)/i.test(cmd)) {
+    const list = [{ ip: "192.168.10.1", mac: "88:36:6C:00:00:01" }, ...visibleDevices().filter(d => d.ip.startsWith("192.168.10.") && d.host !== "KIM-PC"), ...(guestLaptop() ? [guestLaptop()] : [])];
+    out = "인터페이스: 192.168.10.11 --- 0x7\n  인터넷 주소           물리적 주소           유형\n" + list.map(d => `  ${d.ip.padEnd(21)} ${d.mac.toLowerCase().replace(/:/g, "-").padEnd(21)} 동적`).join("\n") +
+      "\n\n(장치 이름은 공유기 관리 화면의 DHCP 목록과 MAC 주소로 대조하세요)";
+    reqs = ["AC.L1-b.1.i", "IA.L1-b.1.v"];
+  } else if (/^get-nettcpconnection/i.test(cmd)) {
+    const ports = [[135, "svchost"], [445, "System"], [5040, "svchost"], ...(S.rdp === 0 ? [[3389, "TermService"]] : [])];
+    out = "LocalAddress LocalPort State  OwningProcess\n------------ --------- -----  -------------\n" + ports.map(([p, n]) => `0.0.0.0      ${String(p).padEnd(9)} Listen ${n}`).join("\n");
+    reqs = ["AC.L1-b.1.iii"];
+  } else if (/^test-netconnection/i.test(cmd)) {
+    const host = (arg(cmd, "ComputerName") || "").toLowerCase(), port = arg(cmd, "Port") || "80";
+    const d = S.net.devices.find(x => x.ip === host || x.host.toLowerCase() === host);
+    const ok = !!d && d.decide !== "block" && (host !== "192.168.10.40" || !S.net.webInDmz);
+    out = `ComputerName     : ${host}\nRemotePort       : ${port}\nSourceAddress    : 192.168.10.11\nTcpTestSucceeded : ${ok ? "True" : "False"}` +
+      (!d ? "\n경고: 이름 확인 실패 또는 장치 없음" : d.decide === "block" ? "\n(공유기에서 차단된 장치)" : "");
   } else {
     out = `'${cmd.split(/\s/)[0]}' 은(는) 실습에서 지원하지 않는 명령입니다. help 를 입력해 보세요.`;
   }
@@ -498,7 +571,7 @@ $("termIn").addEventListener("keydown", e => {
 });
 $("hints").insertAdjacentHTML("beforeend", REQS.map(r => `<details><summary><b>${r.id}</b> ${esc(r.name)}</summary>
   ${r.hint.map(h => `<code>${esc(h)}</code>`).join("") || ""}
-  ${r.ops ? `<div class="muted" style="font-size:.84rem">→ 3. 설정·문서 작업: ${esc(r.ops)}</div>` : ""}</details>`).join(""));
+  ${r.ops ? `<div class="muted" style="font-size:.84rem">→ ${esc(r.ops)}</div>` : ""}</details>`).join(""));
 $("hints").addEventListener("click", e => { if (e.target.tagName === "CODE") { $("termIn").value = e.target.textContent; $("termIn").focus(); } });
 
 /* ---------- 3. 설정·문서 작업 ---------- */
@@ -506,11 +579,6 @@ const OPS = [
   { key: "update", title: "Windows 업데이트", reqs: ["SI.L1-b.1.xii"], body: () => `
       <p class="muted">마지막 설치: ${S.winUpdate ? today() : "2026-07-05"}</p>
       <button class="btn small" data-act="winupdate" ${S.winUpdate ? "disabled" : ""}>업데이트 확인 및 설치</button>` },
-  { key: "router", title: "공유기 관리", reqs: ["SC.L1-b.1.x", "SC.L1-b.1.xi"], body: () => `
-      <label class="row"><input type="checkbox" data-act="remote" ${S.router.remote ? "checked" : ""}> <span>외부(인터넷)에서 원격 관리 허용</span></label>
-      <label class="row"><input type="checkbox" data-act="guest" ${S.guestSep ? "checked" : ""}> <span>손님 Wi-Fi를 업무망과 분리 (게스트 네트워크 격리)</span></label>
-      <div style="margin-top:6px">관리자 암호: ${S.router.defaultPw ? '<span class="pill bad">기본값 admin</span>' : '<span class="pill ok">변경됨</span>'}
-      <input type="password" id="rpw" placeholder="새 암호 (12자 이상)"> <button class="btn small" data-act="rpw">변경</button></div>` },
   { key: "mail", title: "업무 메일 관리", reqs: ["IA.L1-b.1.vi"], body: () => `
       <label class="row"><input type="checkbox" data-act="mfa" ${S.mfa ? "checked" : ""}> <span>전 직원 2단계 인증 필수 적용</span></label>` },
   { key: "ext", title: "외부 시스템 연결 규칙", reqs: ["AC.L1-b.1.iii"], doc: "extRule", body: () => quiz("ext", [
@@ -574,8 +642,6 @@ function renderOps() {
 }
 $("ops").addEventListener("change", e => {
   const a = e.target.dataset.act;
-  if (a === "remote") S.router.remote = e.target.checked;
-  if (a === "guest") S.guestSep = e.target.checked;
   if (a === "mfa") S.mfa = e.target.checked;
   if (a) { save(); refresh(); }
 });
@@ -583,7 +649,6 @@ $("ops").addEventListener("click", e => {
   const t = e.target, card = t.closest(".card"); if (!card) return;
   const key = card.dataset.op, msg = (k, m) => { opMsgs[key] = [k, m]; };
   if (t.dataset.act === "winupdate") { S.winUpdate = true; msg("ok", "누적 업데이트 KB5131877 설치 완료. 프로그램 업데이트는 winget upgrade --all"); }
-  else if (t.dataset.act === "rpw") { const v = $("rpw").value; if (v.length < 12) msg("bad", "12자 이상으로 설정하세요."); else { S.router.defaultPw = false; msg("ok", "관리자 암호 변경 완료"); } }
   else if (t.dataset.act === "map") {
     const want = { kim: "keep", lee: "keep", choi: "keep", park: "disable", office: "disable" };
     const got = Object.fromEntries([...card.querySelectorAll("[data-map]")].map(s => [s.dataset.map, s.value]));
@@ -609,6 +674,155 @@ $("ops").addEventListener("click", e => {
     msg(bad.length ? "warn" : "ok", bad.length ? `저장했지만 아직 미충족 상태의 증거입니다: ${bad.map(r => problems(r).join(", ")).join(" / ")}` : "충족 상태 증거 저장");
   } else return;
   save(); refresh();
+});
+
+/* ---------- 3. 네트워크 ---------- */
+const webIp = () => S.net.webInDmz ? "192.168.30.10" : "192.168.10.40";
+function syncWeb() {
+  const f = S.net.portfw.find(x => x.ext === 443); if (f) f.to = webIp() + ":443";
+  const d = S.net.devices.find(x => x.host === "GSJ-WEB"); if (d) d.ip = webIp();
+}
+const visibleDevices = () => S.net.devices.filter(d => d.decide !== "block");
+const guestLaptop = () => S.net.guestIso ? null : { ip: "192.168.10.88", mac: "F4:5C:89:AB:88:01", host: "GUEST-LAPTOP", vendor: "Apple" };
+
+function renderTopo() {
+  const n = S.net;
+  const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 10}" ${o.bold ? 'font-weight="700"' : ""} fill="${o.fill || "var(--ink)"}" ${o.deco ? 'text-decoration="line-through"' : ""}>${esc(s)}</text>`;
+  const box = (x, y, w, h, stroke) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="var(--bg)" stroke="${stroke || "var(--line)"}" stroke-width="1.5"/>`;
+  const rows = n.devices.filter(d => !(d.host === "GSJ-WEB" && n.webInDmz));
+  if (!n.guestIso) rows.push({ host: "GUEST-LAPTOP", ip: "192.168.10.88", truth: "guest", decide: null });
+  const rowY = {}; let svg = "";
+  svg += `<ellipse cx="320" cy="26" rx="70" ry="18" fill="var(--soft)" stroke="var(--accent)"/>` + t(298, 30, "인터넷", { bold: 1 });
+  svg += `<line x1="320" y1="44" x2="320" y2="70" stroke="var(--muted)" stroke-width="2"/>`;
+  const exposed = S.router.remote || n.upnp;
+  svg += box(210, 70, 220, 42, exposed ? "var(--bad)" : "var(--ok)") + t(220, 87, "공유기 · 방화벽", { bold: 1 }) +
+    t(220, 103, `FW ${n.firmware}${S.router.remote ? " · 원격관리 ON" : ""}${n.upnp ? " · UPnP ON" : ""}`, { size: 9, fill: exposed ? "var(--bad)" : "var(--muted)" });
+  // 업무망
+  svg += `<line x1="300" y1="112" x2="200" y2="140" stroke="var(--muted)" stroke-width="2"/>` + box(10, 140, 380, 30 + rows.length * 15, !n.guestIso ? "var(--bad)" : null);
+  svg += t(20, 157, "업무망 192.168.10.0/24 (FCI 범위)", { bold: 1 });
+  rows.forEach((d, i) => {
+    const y = 175 + i * 15; rowY[d.ip] = y;
+    const bad = (d.truth === "block" && d.decide !== "block") || d.truth === "guest";
+    const blocked = d.decide === "block";
+    svg += t(24, y, `${blocked ? "⛔" : bad ? "⚠" : "●"} ${d.host}`, { fill: blocked ? "var(--muted)" : bad ? "var(--bad)" : "var(--ink)", deco: blocked, size: 9.5 }) +
+      t(190, y, d.ip + (d.truth === "guest" ? "  손님(같은 망!)" : d.host === "GSJ-WEB" ? "  공개 서버(업무망!)" : ""), { fill: bad || d.host === "GSJ-WEB" ? "var(--bad)" : "var(--muted)", size: 9 });
+  });
+  // DMZ
+  svg += `<line x1="350" y1="112" x2="455" y2="140" stroke="var(--muted)" stroke-width="2"/>` + box(400, 140, 110, 70, n.webInDmz ? "var(--ok)" : null);
+  svg += t(408, 157, "DMZ", { bold: 1 }) + t(408, 170, "192.168.30.0/24", { size: 9, fill: "var(--muted)" });
+  svg += n.webInDmz ? t(408, 190, "● GSJ-WEB", { size: 9.5 }) + t(408, 203, "192.168.30.10", { size: 9, fill: "var(--muted)" }) : t(408, 190, "(비어 있음)", { size: 9, fill: "var(--muted)" });
+  if (n.webInDmz) rowY["192.168.30.10"] = 190;
+  // 손님망
+  svg += `<line x1="380" y1="100" x2="570" y2="140" stroke="var(--muted)" stroke-width="2"/>` + box(520, 140, 112, 70, n.guestIso ? "var(--ok)" : "var(--bad)");
+  svg += t(528, 157, "손님 Wi-Fi", { bold: 1 }) + (n.guestIso ? t(528, 172, "192.168.20.0/24", { size: 9, fill: "var(--muted)" }) + t(528, 186, "격리됨", { size: 9.5, fill: "var(--ok)" })
+    : t(528, 174, "업무망과 같은 망", { size: 9.5, fill: "var(--bad)" }) + t(528, 188, "(격리 안 됨)", { size: 9, fill: "var(--bad)" }));
+  // 포트포워딩
+  n.portfw.filter(f => f.on).forEach((f, i) => {
+    const ip = f.to.split(":")[0], y = rowY[ip]; if (!y) return;
+    const x2 = ip.startsWith("192.168.30.") ? 470 : 380;
+    // 인터넷 → (공유기 통과) → 대상 장치
+    svg += `<polyline points="${300 + i * 14},44 ${300 + i * 14},112 ${x2},${y - 4}" fill="none" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>` +
+      t(10, 22 + i * 13, `${f.ext}/tcp → ${ip}`, { size: 9, fill: "var(--bad)" });
+  });
+  const h = Math.max(220, 150 + rows.length * 15 + 20);
+  $("topo").innerHTML = `<svg viewBox="0 0 640 ${h}" width="100%" role="img" aria-label="가상정밀 망 구성도" style="font-family:inherit">${svg}</svg>`;
+}
+
+const netMsgs = {};
+const NET_SECTIONS = {
+  dev: ["AC.L1-b.1.i", "IA.L1-b.1.v"], fw: ["SC.L1-b.1.x", "AC.L1-b.1.iii"], admin: ["SC.L1-b.1.x", "SI.L1-b.1.xii"],
+  wifi: ["IA.L1-b.1.vi", "SC.L1-b.1.xi"], srv: ["SC.L1-b.1.xi"],
+};
+function renderRouter() {
+  const n = S.net;
+  const sec = (key, title, body) => {
+    const done = NET_SECTIONS[key].every(isMet);
+    return `<div class="card ${done ? "done" : ""}" style="margin-bottom:12px" data-sec="${key}"><h3>${title} ${done ? '<span class="pill ok">요구사항 충족</span>' : ""}</h3>
+      <div style="margin-bottom:6px">${NET_SECTIONS[key].map(r => `<span class="pill">${r}</span>`).join("")}</div>${body}
+      <div style="margin-top:8px"><button class="btn ghost small" data-netev="${key}">📸 증거 저장</button></div>
+      <div class="msg ${netMsgs[key]?.[0] || ""}">${netMsgs[key]?.[1] || ""}</div></div>`;
+  };
+  $("router").innerHTML =
+    sec("dev", "연결된 장치 (DHCP 임대 목록)", `<p class="muted" style="margin:0 0 6px;font-size:.85rem">업무 장치는 승인, 모르는 장치는 차단하세요. 제조사·최초 접속 시점이 단서입니다.</p>
+      <div class="tbl"><table style="font-size:.82rem"><tr><th>장치</th><th>IP / MAC</th><th>제조사 · 접속</th><th>처리</th></tr>${n.devices.map((d, i) => `<tr>
+        <td style="word-break:break-all"><b>${esc(d.host)}</b>${d.desc ? `<br><span class="muted">${esc(d.desc)}</span>` : ""}</td><td class="ev" style="white-space:nowrap">${d.ip}<br><span class="muted">${d.mac}</span></td>
+        <td>${esc(d.vendor)}<br><span class="muted">${esc(d.seen)}</span></td>
+        <td><select data-dev="${i}"><option value="">-</option><option value="allow" ${d.decide === "allow" ? "selected" : ""}>승인</option><option value="block" ${d.decide === "block" ? "selected" : ""}>차단</option></select></td></tr>`).join("")}</table></div>`) +
+    sec("fw", "포트 포워딩 · UPnP", `${n.portfw.map((f, i) => `<label class="row"><input type="checkbox" data-pf="${i}" ${f.on ? "checked" : ""}> <span><b>${f.ext}/tcp</b> → ${f.to} <span class="muted">${esc(f.desc)}</span></span></label>`).join("")}
+      <label class="row"><input type="checkbox" data-nset="upnp" ${n.upnp ? "checked" : ""}> <span>UPnP 사용 (내부 장치가 스스로 포트를 열 수 있음)</span></label>`) +
+    sec("admin", "공유기 관리", `<label class="row"><input type="checkbox" data-nset="remote" ${S.router.remote ? "checked" : ""}> <span>인터넷에서 관리 페이지 접속 허용 (8443)</span></label>
+      <label class="row"><input type="checkbox" data-nset="log" ${n.log ? "checked" : ""}> <span>트래픽·차단 로그 기록 및 관리자 메일 알림</span></label>
+      <div style="margin:4px 0">관리자 암호: ${S.router.defaultPw ? '<span class="pill bad">기본값 admin</span>' : '<span class="pill ok">변경됨</span>'}
+        <input type="password" id="rpw" placeholder="새 암호 (12자 이상)"> <button class="btn small" data-nact="rpw">변경</button></div>
+      <div>펌웨어: <b>${n.firmware}</b> ${n.firmware === "1.2.3" ? '<span class="pill ok">최신</span>' : '<span class="pill bad">최신 1.2.3 — 원격 코드 실행 취약점 수정</span>'}
+        <button class="btn small" data-nact="fwup" ${n.firmware === "1.2.3" ? "disabled" : ""}>업데이트</button></div>`) +
+    sec("wifi", "Wi-Fi", `<div>업무 SSID <b>GSJ-Office</b> 보안 방식 <select data-nset="wifiSec">${["WEP", "WPA/WPA2 혼합 (TKIP)", "WPA2-AES", "WPA3-Personal"].map(o => `<option ${o === n.wifiSec ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div style="margin:4px 0">업무 Wi-Fi 암호: ${n.wifiPwChanged ? '<span class="pill ok">변경됨</span>' : '<span class="pill warn">2025-03 이후 그대로 (퇴사자도 알고 있음)</span>'}
+        <input type="password" id="wpw" placeholder="새 암호 (12자 이상)"> <button class="btn small" data-nact="wpw">변경</button></div>
+      <label class="row"><input type="checkbox" data-nset="guestIso" ${n.guestIso ? "checked" : ""}> <span>손님 SSID <b>GSJ-Guest</b>를 별도 대역(192.168.20.0/24)으로 격리, 업무망 접근 차단</span></label>`) +
+    sec("srv", "서버 배치", `<p class="muted" style="margin:0 0 6px;font-size:.85rem">인터넷에 공개되는 회사 소개 웹서버(GSJ-WEB)의 위치</p>
+      <label class="row"><input type="radio" name="srv" data-srv="lan" ${!n.webInDmz ? "checked" : ""}> <span>업무망 192.168.10.40</span></label>
+      <label class="row"><input type="radio" name="srv" data-srv="dmz" ${n.webInDmz ? "checked" : ""}> <span>DMZ 192.168.30.10 (업무망으로 가는 연결 차단)</span></label>`);
+}
+function renderNet() { renderTopo(); renderRouter(); }
+
+$("router").addEventListener("change", e => {
+  const el = e.target, n = S.net;
+  if (el.dataset.dev !== undefined) n.devices[+el.dataset.dev].decide = el.value || null;
+  else if (el.dataset.pf !== undefined) n.portfw[+el.dataset.pf].on = el.checked;
+  else if (el.dataset.nset === "remote") S.router.remote = el.checked;
+  else if (el.dataset.nset === "wifiSec") n.wifiSec = el.value;
+  else if (el.dataset.nset) n[el.dataset.nset] = el.checked;
+  else if (el.dataset.srv) { n.webInDmz = el.dataset.srv === "dmz"; syncWeb(); }
+  else return;
+  save(); refresh();
+});
+$("router").addEventListener("click", e => {
+  const t = e.target, sec = t.closest("[data-sec]"); if (!sec) return;
+  const key = sec.dataset.sec, msg = (k, m) => { netMsgs[key] = [k, m]; };
+  if (t.dataset.nact === "rpw") { if ($("rpw").value.length < 12) msg("bad", "12자 이상으로 설정하세요."); else { S.router.defaultPw = false; msg("ok", "관리자 암호 변경 완료"); } }
+  else if (t.dataset.nact === "wpw") {
+    if ($("wpw").value.length < 12) msg("bad", "12자 이상으로 설정하세요.");
+    else { S.net.wifiPwChanged = true; msg("ok", "Wi-Fi 암호 변경 완료. 저장된 암호로 붙던 장치는 더 이상 접속할 수 없습니다. 직원 장치에 새 암호를 입력하세요."); }
+  } else if (t.dataset.nact === "fwup") { S.net.firmware = "1.2.3"; msg("ok", "펌웨어 1.2.3 설치, 공유기 재시작 완료"); }
+  else if (t.dataset.netev) {
+    const reqs = NET_SECTIONS[key];
+    addEvidence(`공유기_${sec.querySelector("h3").firstChild.textContent.trim().replace(/[\s·()]+/g, "_")}_${today()}.png`, reqs, "공유기 화면 캡처");
+    const bad = reqs.filter(r => !isMet(r));
+    msg(bad.length ? "warn" : "ok", bad.length ? `저장했지만 미충족 상태: ${bad.map(r => problems(r).join(", ")).join(" / ")}` : "충족 상태 증거 저장");
+  } else return;
+  save(); refresh();
+});
+
+let lastTool = null;
+function netOut(lines) { $("netOut").textContent = lines.join("\n"); }
+document.querySelector("#p-net").addEventListener("click", e => {
+  const a = e.target.dataset.net, n = S.net;
+  if (a === "scan") {
+    const open = n.portfw.filter(f => f.on).map(f => `  ${String(f.ext).padEnd(5)}/tcp  → ${f.to.padEnd(19)} ${f.desc}${f.ext === 443 ? (n.webInDmz ? "  (공개 서비스·DMZ: 정상)" : "  ⚠ 업무망 서버를 공개 중") : "  ⚠ 공개하면 안 됨"}`);
+    if (S.router.remote) open.push("  8443 /tcp  → 공유기 관리 페이지        ⚠ 관리 화면 인터넷 노출");
+    const esp = n.devices.find(d => d.host === "ESP_3C21A9");
+    if (n.upnp && esp.decide !== "block") open.push("  49152/tcp  → 192.168.10.61 (UPnP 자동)  ⚠ 미확인 IoT 장치가 스스로 연 포트");
+    netOut([`외부(인터넷)에서 회사 공인 IP 203.0.113.57 포트 스캔 — ${new Date().toLocaleTimeString("ko-KR")}`, "", "열린 포트:", ...(open.length ? open : ["  (없음)"]), "",
+      "나머지 TCP 포트: 응답 없음(차단)", open.some(l => l.includes("⚠")) ? "결과: ⚠ 표시 포트를 닫거나 원인을 조치하세요." : "결과: 공개 의도에 맞는 포트만 열려 있습니다."]);
+    lastTool = { reqs: ["SC.L1-b.1.x", "AC.L1-b.1.iii"], name: "외부포트스캔" };
+  } else if (a === "t-guest") {
+    netOut(["손님 Wi-Fi(GSJ-Guest)에 연결한 노트북에서:", "PS> Test-NetConnection -ComputerName 192.168.10.20 -Port 445", "",
+      n.guestIso ? "TcpTestSucceeded : False\n경고: TCP connect to 192.168.10.20:445 failed\n결과: 격리 정상 — 손님은 업무망 NAS에 접근할 수 없습니다." : "TcpTestSucceeded : True\n결과: ⚠ 손님이 업무망 공유 폴더(FCI)에 접근할 수 있습니다."]);
+    lastTool = { reqs: ["SC.L1-b.1.xi"], name: "분리시험_손님WiFi" };
+  } else if (a === "t-web") {
+    netOut([`공개 웹서버 GSJ-WEB(${webIp()})에서:`, "$ nc -zv 192.168.10.20 445", "",
+      n.webInDmz ? "nc: connect to 192.168.10.20 port 445 (tcp) failed: Connection timed out\n결과: 분리 정상 — 웹서버가 해킹돼도 업무망으로 넘어갈 수 없습니다." : "Connection to 192.168.10.20 445 port [tcp/microsoft-ds] succeeded!\n결과: ⚠ 웹서버가 뚫리면 공격자가 곧바로 NAS에 접근할 수 있습니다."]);
+    lastTool = { reqs: ["SC.L1-b.1.xi"], name: "분리시험_웹서버" };
+  } else if (e.target.dataset.netev === "tools") {
+    if (!lastTool) { $("netToolMsg").className = "msg bad"; $("netToolMsg").textContent = "먼저 점검 도구를 실행하세요."; return; }
+    addEvidence(`${lastTool.name}_${today()}.txt`, lastTool.reqs, "네트워크 점검 도구");
+    const bad = lastTool.reqs.filter(r => !isMet(r));
+    $("netToolMsg").className = "msg " + (bad.length ? "warn" : "ok");
+    $("netToolMsg").textContent = bad.length ? `저장했지만 미충족 상태의 결과입니다: ${bad.join(", ")}` : "충족 상태 결과를 증거로 저장했습니다.";
+    return;
+  } else return;
+  $("netToolMsg").textContent = "";
 });
 
 /* ---------- 4. 자체평가 ---------- */
