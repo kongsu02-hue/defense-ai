@@ -4,90 +4,58 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>국방 AI 교육</title>
-<meta name="description" content="국방 AI 교육 자료, 실습 시뮬레이터, AI 에이전트 실습 예제">
-<style>
-:root{--bg:#f6f7f4;--card:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde2dc;--accent:#3d6b4f;--accent-soft:#e3eee6;--code:#eef1ed}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#e6ebe7;--muted:#9aa59f;--line:#2c3430;--accent:#7fb592;--accent-soft:#22332a;--code:#232a26}}
-:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#e6ebe7;--muted:#9aa59f;--line:#2c3430;--accent:#7fb592;--accent-soft:#22332a;--code:#232a26}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
-.wrap{max-width:960px;margin:0 auto;padding:40px 16px 72px}
-.kicker{color:var(--accent);font-weight:700;letter-spacing:.04em;font-size:.9rem}
-h1{font-size:2.1rem;line-height:1.25;margin:6px 0 10px}
-.lead{color:var(--muted);max-width:640px;margin:0}
-h2{font-size:1.25rem;margin:44px 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;color:inherit;text-decoration:none}
-a.card:hover{border-color:var(--accent)}
-.card .tag{display:inline-block;font-size:.78rem;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 10px;margin-bottom:8px}
-.card b{display:block;font-size:1.08rem;margin-bottom:4px}
-.card p{margin:0;color:var(--muted);font-size:.94rem}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:.94rem}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{background:var(--accent-soft)}
-tr:last-child td{border-bottom:0}
-.tbl{overflow-x:auto}
-code,pre{font-family:Consolas,monospace;background:var(--code);border-radius:6px}
-code{padding:1px 5px;font-size:.88em}
-pre{padding:14px;overflow-x:auto;font-size:.85rem;line-height:1.5}
-.note{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--muted)}
-footer{margin-top:56px;color:var(--muted);font-size:.85rem}
-</style>
+<meta name="description" content="2026년 국방 AI 현황 강의, 앱 개발·GitHub·PC 제어 AI 에이전트, AI 코딩 에이전트로 업무용 앱을 만드는 실습">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<div class="wrap">
-<div class="kicker">DEFENSE AI EDUCATION</div>
-<h1>국방 AI 교육</h1>
-<p class="lead">AI의 기초 개념부터 국방 분야 활용, 윤리·보안, 그리고 스스로 도구를 사용하는 <b>AI 에이전트</b>까지 실습으로 익히는 교육 과정입니다.</p>
+<nav class="top"><div class="wrap">
+  <a class="brand" href="index.html">국방 AI 교육</a>
+  <a href="lecture.html">강의</a>
+  <a href="agent-lab.html">AI 에이전트</a>
+  <a href="practice.html">앱 개발 실습</a>
+</div></nav>
 
-<h2>교육 자료</h2>
-<div class="grid">
-  <a class="card" href="materials/defense-ai-lecture.pptx"><span class="tag">강의</span><b>국방 AI 교육 슬라이드</b><p>국방 AI 개요, 활용 분야, 위험과 윤리 원칙 (PPTX 다운로드)</p></a>
-  <a class="card" href="simulator.html"><span class="tag">실습</span><b>국방 AI 실습 시뮬레이터</b><p>표적 탐지 임계값, 예측정비, 데이터 오염·적대적 공격, AI 결심지원</p></a>
-  <a class="card" href="agent-lab.html"><span class="tag">실습 · NEW</span><b>AI 에이전트 실습실</b><p>보급 점검, 예측 정비, 정보 종합 시나리오로 에이전트 루프를 단계별 체험</p></a>
-  <a class="card" href="https://github.com/kongsu02-hue/defense-ai/tree/main/agent-labs"><span class="tag">코드</span><b>Python 에이전트 예제</b><p>규칙 기반 ReAct → Claude 도구 사용 → 멀티 에이전트 참모회의</p></a>
-</div>
+<header class="hero"><div class="wrap">
+  <div class="kicker">DEFENSE AI · 2026</div>
+  <h1>AI로 직접 만드는 군 실무자</h1>
+  <p class="lead">미 국방부는 개발자에게 터미널에서 일하는 AI 코딩 에이전트를 조달하고, 한국 국방부는 에이전틱 AI 거점을 만들고 있습니다. 이 과정은 그 흐름을 공개 자료로 확인하고, <b>AI 에이전트로 업무용 앱을 만들고 GitHub로 관리하고 PC 업무를 자동화하는 법</b>을 실습합니다.</p>
+  <div class="cta">
+    <a class="btn primary" href="practice.html">실습 시작하기</a>
+    <a class="btn" href="lecture.html">국방 AI 현황 강의</a>
+  </div>
+</div></header>
 
-<h2>AI 에이전트란?</h2>
-<p>일반 챗봇은 질문에 <em>답</em>만 합니다. 에이전트는 목표를 받으면 스스로 계획을 세우고, 필요한 <b>도구</b>(DB 조회, 계산, 요청 생성 등)를 호출하고, 결과를 관찰해 다음 행동을 정하는 과정을 반복합니다.</p>
-<pre>목표 ─▶ 💭 생각 ─▶ 🔧 도구 호출 ─▶ 👀 관찰 ─┐
-          ▲                                │
-          └──────── 목표 달성까지 반복 ◀────┘
-                            │
-               실행 행동이면 🛑 사람 승인 ─▶ ✅ 보고</pre>
+<main class="wrap">
+<section>
+  <h2>과정 구성 (2일)</h2>
+  <p class="sub">강의 2시간, 에이전트 이해 2시간, 실습 10시간</p>
+  <div class="grid">
+    <a class="card" href="lecture.html"><span class="tag">강의 · 2시간</span><b>국방 AI, 지금 어디까지 왔나</b><p>한국 2026~27 예산·국방AX 거점, 미 GenAI.mil과 AI 코딩 도구 조달, 우크라이나 전장, REAIM과 공급사 분쟁 — 출처 포함</p></a>
+    <a class="card" href="agent-lab.html"><span class="tag">AI 에이전트 · 2시간</span><b>앱 개발 · GitHub · PC 제어</b><p>에이전트 구조와 안전 원칙을 Claude Code와 Python 에이전트 3종으로 익힘</p></a>
+    <a class="card" href="practice.html"><span class="tag">실습 · 10시간</span><b>업무용 앱 만들기</b><p>웹앱 → 테스트 주도 개발 → GitHub 협업·배포 → PC 자동화 → 팀 종합 과제</p></a>
+  </div>
+</section>
 
-<h2>에이전트 실습 과정</h2>
-<div class="tbl"><table>
-<tr><th>단계</th><th>내용</th><th>파일</th><th>준비물</th></tr>
-<tr><td>0</td><td>웹에서 에이전트 루프 체험 (3개 시나리오)</td><td><a href="agent-lab.html">agent-lab.html</a></td><td>브라우저</td></tr>
-<tr><td>1</td><td>규칙 기반 '두뇌'로 ReAct 구조 이해</td><td><code>lab1_react_agent_mock.py</code></td><td>Python 3.10+</td></tr>
-<tr><td>2</td><td>Claude API 도구 사용 에이전트 + 지휘관 승인</td><td><code>lab2_claude_tool_agent.py</code></td><td>API 키</td></tr>
-<tr><td>3</td><td>정보·군수·정비 멀티 에이전트 → 참모장 종합</td><td><code>lab3_multi_agent_staff.py</code></td><td>API 키</td></tr>
-</table></div>
+<section>
+  <h2>시간표</h2>
+  <div class="tbl"><table>
+    <tr><th>일차</th><th>오전</th><th>오후</th></tr>
+    <tr><td>1일차</td><td>강의: 국방 AI 현황 · AI 에이전트 구조와 안전 원칙</td><td>실습 1 웹앱 만들기 · 실습 2 테스트 주도 개발</td></tr>
+    <tr><td>2일차</td><td>실습 3 GitHub 협업·배포 · 실습 4 PC 업무 자동화</td><td>종합 과제(팀) · 발표와 리뷰</td></tr>
+  </table></div>
+</section>
 
-<h3>실행 방법</h3>
-<pre>git clone https://github.com/kongsu02-hue/defense-ai.git
-cd defense-ai/agent-labs
-python lab1_react_agent_mock.py            # API 키 없이 실행
+<section>
+  <h2>바로 해 보기</h2>
+  <div class="grid">
+    <a class="card" href="practice/lab1-checklist/solution/index.html"><span class="tag">데모</span><b>장비 점검 체크리스트</b><p>실습 1에서 AI 에이전트와 만드는 웹앱의 참고 답안</p></a>
+    <a class="card" href="https://github.com/kongsu02-hue/defense-ai/tree/main/agent-labs"><span class="tag">코드</span><b>Python 에이전트 3종</b><p>앱 빌더 · GitHub 에이전트 · PC 제어 에이전트</p></a>
+    <a class="card" href="https://github.com/kongsu02-hue/defense-ai/tree/main/practice"><span class="tag">코드</span><b>실습 파일</b><p>요구사항, 테스트, 가상 데이터, 참고 답안</p></a>
+  </div>
+  <p class="note">모든 실습 데이터는 교육용 가상 데이터입니다. 실습 코드는 교육 목적으로 Claude API를 사용하며, 실제 군 업무망에서는 승인된 AI 체계와 보안 규정을 따르십시오.</p>
+</section>
+</main>
 
-pip install -r requirements.txt
-$env:ANTHROPIC_API_KEY="sk-ant-..."         # PowerShell
-python lab2_claude_tool_agent.py "2대대 보급 상태를 점검하라"
-python lab3_multi_agent_staff.py</pre>
-
-<h2>국방 AI 에이전트 운용 원칙</h2>
-<div class="grid">
-  <div class="card"><b>🛑 사람의 최종 결정</b><p>실행이 따르는 행동은 반드시 사람 승인을 거친다 (Human-in-the-loop).</p></div>
-  <div class="card"><b>🔐 최소 권한</b><p>각 에이전트에는 임무에 필요한 도구만 부여한다.</p></div>
-  <div class="card"><b>📎 근거 제시</b><p>도구로 확인한 데이터와 추정을 구분해 보고한다.</p></div>
-  <div class="card"><b>🧾 기록·감사</b><p>모든 도구 호출과 판단 과정을 로그로 남긴다.</p></div>
-  <div class="card"><b>🧪 신뢰도 평가</b><p>출처가 불명확한 첩보는 사실과 분리하고 추가 확인을 건의한다.</p></div>
-  <div class="card"><b>🔁 안전 장치</b><p>최대 반복 횟수, 오류 처리로 폭주를 막는다.</p></div>
-</div>
-
-<p class="note">모든 실습 데이터는 교육용 가상 데이터이며 실제 부대·장비·작전 정보와 무관합니다. 실제 군 업무망에서는 승인된 AI 체계와 보안 규정을 따르십시오.</p>
-
-<footer>국방 AI 교육 자료 · <a href="https://github.com/kongsu02-hue/defense-ai">GitHub 저장소</a></footer>
-</div>
+<footer><div class="wrap">국방 AI 교육 · <a href="https://github.com/kongsu02-hue/defense-ai">GitHub 저장소</a></div></footer>
 </body>
 </html>

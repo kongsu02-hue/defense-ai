@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장비 점검 체크리스트</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde2dc;--accent:#3d6b4f;--soft:#e3eee6;--bad:#b3261e;--bad-soft:#fbe9e7}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b201d;--ink:#e6ebe7;--muted:#9aa59f;--line:#2c3430;--accent:#7fb592;--soft:#22332a;--bad:#f2867c;--bad-soft:#3a1f1c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Malgun Gothic",system-ui,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:8px 0 2px}
+.muted{color:var(--muted);font-size:.88rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.item{border-top:1px solid var(--line);padding:12px 0}
+.item:first-child{border-top:0}
+.item .q{font-weight:600;margin-bottom:6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{display:inline-flex;align-items:center;gap:4px;margin:0;border:1px solid var(--line);border-radius:99px;padding:4px 12px;color:var(--ink);cursor:pointer;font-size:.9rem}
+.seg input{width:auto}
+.seg label:has(input:checked){background:var(--soft);border-color:var(--accent)}
+.seg label.bad:has(input:checked){background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.item textarea{margin-top:8px;display:none}
+.item.issue textarea{display:block}
+.item.err textarea{border-color:var(--bad)}
+button{font:inherit;border-radius:8px;padding:9px 16px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{margin-top:10px;font-size:.9rem}
+.msg.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tblwrap{overflow-x:auto}
+.pill{display:inline-block;border-radius:99px;padding:1px 8px;font-size:.78rem;background:var(--soft);color:var(--accent)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>장비 점검 체크리스트</h1>
+  <div class="muted">실습 1 참고 답안 · 기록은 이 브라우저에만 저장됩니다 · 교육용 가상 항목</div>
+
+  <form class="card" id="form" novalidate>
+    <div class="row">
+      <div><label for="tpl">점검 종류</label><select id="tpl"></select></div>
+      <div><label for="equip">장비번호</label><input id="equip" placeholder="예: 차량-01" required></div>
+      <div><label for="inspector">점검자</label><input id="inspector" placeholder="계급 성명" required></div>
+      <div><label for="when">일시</label><input id="when" type="datetime-local" required></div>
+    </div>
+    <div id="items" style="margin-top:12px"></div>
+    <div class="bar"><button type="submit">점검 결과 저장</button><button type="button" class="ghost" id="reset">초기화</button></div>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+
+  <section class="card">
+    <div class="bar" style="justify-content:space-between">
+      <b>점검 기록 <span class="muted" id="count"></span></b>
+      <div class="bar">
+        <label class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="onlyIssue" style="width:auto"> 이상 있음만</label>
+        <button type="button" class="ghost" id="csv">CSV 내보내기</button>
+      </div>
+    </div>
+    <div class="tblwrap"><table><thead><tr><th>일시</th><th>종류</th><th>장비</th><th>점검자</th><th>결과</th></tr></thead><tbody id="list"></tbody></table></div>
+  </section>
+</div>
+
+<script>
+const TEMPLATES = {
+  "차량 일일점검": ["엔진오일 량", "냉각수 량", "타이어 공기압·손상", "전조등·방향지시등", "제동장치 작동", "누유·누수"],
+  "통신장비 점검": ["전원 인가 및 자체진단", "배터리 잔량", "안테나·케이블 상태", "송수신 시험", "보안 모듈 표시등"],
+  "발전기 점검": ["연료 량", "엔진오일 량", "시동 및 무부하 운전", "출력 전압·주파수", "접지 상태", "소화기 비치"]
+};
+const KEY = "checklist-records-v1";
+const $ = (id) => document.getElementById(id);
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+const save = (r) => { try { localStorage.setItem(KEY, JSON.stringify(r)); return true; } catch { return false; } };
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function nowLocal() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
+
+function renderItems() {
+  $("items").innerHTML = TEMPLATES[$("tpl").value].map((q, i) => `
+    <div class="item" data-i="${i}">
+      <div class="q">${i + 1}. ${esc(q)}</div>
+      <div class="seg">
+        <label><input type="radio" name="r${i}" value="정상" checked> 정상</label>
+        <label class="bad"><input type="radio" name="r${i}" value="이상"> 이상</label>
+        <label><input type="radio" name="r${i}" value="해당없음"> 해당없음</label>
+      </div>
+      <textarea rows="2" placeholder="이상 내용과 조치 사항 (필수)"></textarea>
+    </div>`).join("");
+}
+
+function renderList() {
+  const all = load();
+  const rows = $("onlyIssue").checked ? all.filter(r => r.issues > 0) : all;
+  $("count").textContent = `(${rows.length}/${all.length})`;
+  $("list").innerHTML = rows.slice().reverse().map(r => `<tr>
+    <td>${esc(r.when.replace("T", " "))}</td><td>${esc(r.template)}</td><td>${esc(r.equip)}</td><td>${esc(r.inspector)}</td>
+    <td>${r.issues ? `<span class="pill bad">이상 ${r.issues}건</span><div class="muted">${r.items.filter(x => x.result === "이상").map(x => esc(x.item + ": " + x.note)).join("<br>")}</div>` : '<span class="pill">이상 없음</span>'}</td>
+  </tr>`).join("") || '<tr><td colspan="5" class="muted">기록이 없습니다.</td></tr>';
+}
+
+$("items").addEventListener("change", (e) => {
+  const item = e.target.closest(".item");
+  if (item && e.target.type === "radio") item.classList.toggle("issue", e.target.value === "이상");
+});
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const msg = $("msg"); msg.className = "msg";
+  const head = ["equip", "inspector", "when"].map(id => $(id));
+  const missing = head.filter(el => !el.value.trim());
+  const items = [...document.querySelectorAll(".item")].map(el => {
+    const result = el.querySelector("input:checked").value;
+    const note = el.querySelector("textarea").value.trim();
+    el.classList.toggle("err", result === "이상" && !note);
+    return { item: el.querySelector(".q").textContent.replace(/^\d+\.\s*/, ""), result, note: result === "이상" ? note : "" };
+  });
+  const noNote = items.filter(x => x.result === "이상" && !x.note);
+  if (missing.length || noNote.length) {
+    msg.className = "msg bad";
+    msg.textContent = missing.length ? "장비번호, 점검자, 일시를 입력하세요." : `이상 항목 ${noNote.length}건에 조치 메모를 입력하세요.`;
+    (missing[0] || document.querySelector(".item.err textarea")).focus();
+    return;
+  }
+  const rec = { template: $("tpl").value, equip: $("equip").value.trim(), inspector: $("inspector").value.trim(),
+                when: $("when").value, items, issues: items.filter(x => x.result === "이상").length };
+  const all = load(); all.push(rec);
+  msg.textContent = save(all) ? `저장했습니다. (${rec.equip}, 이상 ${rec.issues}건)` : "이 브라우저에서는 저장할 수 없습니다.";
+  renderItems(); $("when").value = nowLocal(); renderList();
+});
+
+$("reset").addEventListener("click", () => { renderItems(); $("msg").textContent = ""; });
+$("tpl").addEventListener("change", renderItems);
+$("onlyIssue").addEventListener("change", renderList);
+
+$("csv").addEventListener("click", () => {
+  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const lines = [["일시", "종류", "장비번호", "점검자", "항목", "결과", "메모"].map(q).join(",")];
+  load().forEach(r => r.items.forEach(x => lines.push([r.when.replace("T", " "), r.template, r.equip, r.inspector, x.item, x.result, x.note].map(q).join(","))));
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `점검기록_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$("tpl").innerHTML = Object.keys(TEMPLATES).map(t => `<option>${t}</option>`).join("");
+$("when").value = nowLocal();
+renderItems(); renderList();
+</script>
+</body>
+</html>

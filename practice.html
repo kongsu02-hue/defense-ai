@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>앱 개발 실습</title>
+<meta name="description" content="AI 코딩 에이전트로 업무용 앱을 만들고 GitHub로 협업·배포하고 PC 업무를 자동화하는 실습 4개와 종합 과제">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="brand" href="index.html">국방 AI 교육</a>
+  <a href="lecture.html">강의</a>
+  <a href="agent-lab.html">AI 에이전트</a>
+  <a href="practice.html" aria-current="page">앱 개발 실습</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="kicker">실습 · 앱 개발 중심</div>
+  <h1>AI 에이전트와 함께 업무용 앱 만들기</h1>
+  <p class="lead">코드를 외우는 대신 <b>요구사항을 정확히 쓰고, 에이전트에게 맡기고, 테스트와 검토로 확인하는</b> 방식을 익힙니다. 각 실습은 앞 실습의 결과물을 이어서 씁니다.</p>
+  <div class="toc"><a href="#prep">준비</a><a href="#p1">실습 1 웹앱</a><a href="#p2">실습 2 테스트 주도</a><a href="#p3">실습 3 GitHub</a><a href="#p4">실습 4 PC 자동화</a><a href="#p5">종합 과제</a></div>
+</div></header>
+
+<main class="wrap">
+
+<section id="prep">
+  <h2>준비물</h2>
+  <div class="tbl"><table>
+    <tr><th>항목</th><th>설치</th><th>확인</th></tr>
+    <tr><td>Python 3.10+</td><td><code>winget install Python.Python.3.12</code></td><td><code>python --version</code></td></tr>
+    <tr><td>Git · GitHub CLI</td><td><code>winget install Git.Git</code> · <code>winget install GitHub.cli</code></td><td><code>gh auth status</code></td></tr>
+    <tr><td>Claude Code</td><td><a href="https://code.claude.com/docs">공식 문서</a>의 설치 안내</td><td><code>claude --version</code></td></tr>
+    <tr><td>실습 저장소</td><td><code>git clone https://github.com/kongsu02-hue/defense-ai.git</code></td><td><code>cd defense-ai</code></td></tr>
+  </table></div>
+  <p class="note warn">실습은 개인 PC 또는 교육용 PC에서 진행합니다. 업무망 PC에 설치하거나 실제 부대 자료를 넣지 마십시오.</p>
+</section>
+
+<section id="p1">
+  <span class="tag">실습 1 · 90분</span>
+  <h2>AI 코딩 에이전트로 웹앱 만들기 — 장비 점검 체크리스트</h2>
+  <p>요구사항 7개(템플릿 선택, 이상 시 메모 필수, 저장·필터, CSV 내보내기, 오프라인, 모바일)를 표로 주고 Claude Code가 단일 HTML 앱을 만들게 합니다. 완료 기준은 <b>사람이 직접</b> 하나씩 확인합니다.</p>
+  <ol class="steps">
+    <li>요구사항 표를 붙여 넣고 "계획부터 보여줘"</li>
+    <li>계획을 고친 뒤 구현 요청 → 브라우저에서 R1~R7 확인</li>
+    <li>실패 항목은 "재현 방법 + 기대 결과"로 다시 지시</li>
+    <li><code>git init</code> 후 "AI 에이전트 작성, 사람 검증" 커밋</li>
+  </ol>
+  <div class="cta"><a class="btn primary" href="practice/lab1-checklist/solution/index.html">참고 답안 실행해 보기</a><a class="btn" href="https://github.com/kongsu02-hue/defense-ai/tree/main/practice/lab1-checklist">요구사항·지시 예시</a></div>
+</section>
+
+<section id="p2">
+  <span class="tag">실습 2 · 90분</span>
+  <h2>테스트 주도로 업무 도구 만들기 — 정비 이력 분석기</h2>
+  <p>함수 뼈대와 <b>실패하는 테스트 8개</b>가 주어집니다. 에이전트에게 "테스트는 고치지 말고 구현만"을 지시하고, 통과하면 기능 추가를 <b>테스트부터</b> 요청합니다.</p>
+<pre>cd practice\lab2-maintenance
+pytest -q              # 처음엔 모두 실패
+claude                 # "tests를 읽고 maintenance.py만 구현해 모두 통과시켜라"
+pytest -q              # 8 passed
+python maintenance.py  # 정비 현황 보고서 출력</pre>
+  <p class="note">관찰 포인트: 에이전트가 테스트를 고치거나 답을 하드코딩하려 하는가? 사람이 diff를 읽어야 하는 이유입니다.</p>
+  <div class="cta"><a class="btn" href="https://github.com/kongsu02-hue/defense-ai/tree/main/practice/lab2-maintenance">실습 파일</a></div>
+</section>
+
+<section id="p3">
+  <span class="tag">실습 3 · 90분</span>
+  <h2>GitHub로 협업하고 배포하기</h2>
+  <p>이슈 → 브랜치 → 초안 PR → 자동 테스트(GitHub Actions) → 동료 검토 → 병합 → GitHub Pages 배포까지 전 과정을 직접, 그리고 GitHub 에이전트로 한 번 더 해 봅니다.</p>
+<pre>gh issue create --title "이상 항목 사진 첨부"
+git switch -c feature/photo
+...
+gh pr create --draft
+python agent-labs\lab2_github_agent.py --repo . "열린 이슈와 PR, Actions 결과를 점검해라"</pre>
+  <p class="note">처음 로그인한 <code>gh</code> 토큰에는 <code>workflow</code> 권한이 없어 Actions 파일 푸시가 거부됩니다. 오류를 읽고 <code>gh auth refresh -s workflow</code>로 해결하는 과정도 실습의 일부입니다.</p>
+  <div class="cta"><a class="btn" href="https://github.com/kongsu02-hue/defense-ai/tree/main/practice/lab3-github-flow">단계별 안내 · CI 템플릿</a></div>
+</section>
+
+<section id="p4">
+  <span class="tag">실습 4 · 90분</span>
+  <h2>내 PC 업무 자동화 앱 — 일일 보고 자동 취합기</h2>
+  <p>분대별 CSV 보고를 모아 표와 메신저용 요약으로 만드는 앱을 에이전트와 만들고, Windows 작업 스케줄러에 매일 17:10 실행으로 등록합니다. 미보고 분대 표시, 형식 오류 파일 건너뛰기, 원본 보존이 완료 기준입니다.</p>
+<pre>python practice\lab4-pc-automation\make_sample.py     # 가상 보고 6개 생성
+python merge_reports.py "$HOME\보고함_실습"
+python agent-labs\lab3_pc_agent.py "보고함_실습 폴더를 요약하고 취합 파일이 생겼는지 확인해줘"</pre>
+  <div class="cta"><a class="btn" href="https://github.com/kongsu02-hue/defense-ai/tree/main/practice/lab4-pc-automation">요구사항·참고 답안</a></div>
+</section>
+
+<section id="p5">
+  <span class="tag warn">종합 과제 · 팀 3~4명</span>
+  <h2>우리 부서의 반복 업무 하나를 앱으로</h2>
+  <ol class="steps">
+    <li><b>문제 고르기:</b> 매주 30분 이상 걸리는 반복 업무 (예: 근무표 작성, 교육 출석 집계, 물품 대여 대장)</li>
+    <li><b>요구사항 표:</b> 번호·요구사항·완료 기준. 실제 자료 대신 가상 데이터 설계</li>
+    <li><b>개발:</b> 에이전트로 구현, 테스트 최소 5개</li>
+    <li><b>협업:</b> 기능마다 이슈·브랜치·PR, 팀원 1명 이상 리뷰, Actions 통과</li>
+    <li><b>발표 (10분):</b> 시연, 절약되는 시간, 에이전트가 틀렸던 사례와 잡아낸 방법, 업무망 적용 시 필요한 승인</li>
+  </ol>
+  <div class="tbl"><table>
+    <tr><th>평가 항목</th><th>비중</th><th>기준</th></tr>
+    <tr><td>동작</td><td>30%</td><td>완료 기준을 시연으로 충족</td></tr>
+    <tr><td>검증</td><td>25%</td><td>테스트, 사람이 확인한 기록, 에이전트 오류를 잡은 사례</td></tr>
+    <tr><td>협업 이력</td><td>20%</td><td>이슈·PR·리뷰·AI 작성 표시</td></tr>
+    <tr><td>안전·보안</td><td>15%</td><td>민감정보 없음, 권한 최소화, 되돌리기 가능</td></tr>
+    <tr><td>업무 효과</td><td>10%</td><td>절약 시간 추정의 근거</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>부록</h2>
+  <div class="grid">
+    <a class="card" href="simulator.html"><span class="tag">개념 체험</span><b>AI 모델 개념 시뮬레이터</b><p>임계값과 오경보, 예측정비, 데이터 오염, 결심지원을 브라우저에서 체험 (이전 과정 자료)</p></a>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap">국방 AI 교육 · 모든 실습 데이터는 교육용 가상 데이터 · <a href="https://github.com/kongsu02-hue/defense-ai">GitHub 저장소</a></div></footer>
+</body>
+</html>

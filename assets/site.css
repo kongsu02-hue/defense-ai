@@ -1,0 +1,50 @@
+:root{--bg:#f6f7f4;--card:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde2dc;--accent:#3d6b4f;--accent-soft:#e3eee6;--warn:#9a5a12;--warn-soft:#f8ecd9;--code:#eef1ed}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b201d;--ink:#e6ebe7;--muted:#9aa59f;--line:#2c3430;--accent:#7fb592;--accent-soft:#22332a;--warn:#e0a35a;--warn-soft:#3a2c1a;--code:#232a26}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b201d;--ink:#e6ebe7;--muted:#9aa59f;--line:#2c3430;--accent:#7fb592;--accent-soft:#22332a;--warn:#e0a35a;--warn-soft:#3a2c1a;--code:#232a26}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;word-break:keep-all;overflow-wrap:anywhere}
+a{color:var(--accent)}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+nav.top{border-bottom:1px solid var(--line);background:var(--card)}
+nav.top .wrap{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;padding-top:12px;padding-bottom:12px}
+nav.top .brand{font-weight:800;color:var(--ink);text-decoration:none;margin-right:auto}
+nav.top a{text-decoration:none;font-size:.95rem}
+nav.top a[aria-current="page"]{font-weight:700;text-decoration:underline;text-underline-offset:4px}
+header.hero{padding:48px 0 32px;border-bottom:1px solid var(--line)}
+.kicker{color:var(--accent);font-weight:700;letter-spacing:.04em;font-size:.88rem}
+h1{font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.25;margin:6px 0 12px;letter-spacing:-.02em}
+.lead{color:var(--muted);max-width:680px;margin:0}
+main section{padding:36px 0;border-bottom:1px solid var(--line)}
+main section:last-child{border-bottom:0}
+h2{font-size:1.35rem;margin:0 0 8px;line-height:1.35}
+h3{font-size:1.06rem;margin:24px 0 6px}
+.sub{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
+.card b{display:block;font-size:1.04rem;margin-bottom:4px}
+.card p{margin:0;color:var(--muted);font-size:.93rem}
+.tag{display:inline-block;font-size:.76rem;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 10px;margin-bottom:8px}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;border:1px solid var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--card)}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:.93rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--accent-soft);white-space:nowrap}
+code,pre,kbd{font-family:Consolas,"D2Coding",monospace}
+code{background:var(--code);border-radius:5px;padding:1px 5px;font-size:.88em}
+pre{background:var(--code);border-radius:8px;padding:14px;overflow-x:auto;font-size:.84rem;line-height:1.55;margin:10px 0}
+.note{border-left:3px solid var(--accent);padding:6px 0 6px 14px;color:var(--muted);margin:16px 0}
+.note.warn{border-color:var(--warn)}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.fact .num{font-size:1.5rem;font-weight:800;color:var(--accent);line-height:1.2}
+.fact p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+.src{font-size:.82rem;color:var(--muted)}
+.src a{color:var(--muted)}
+ol.steps{padding-left:22px}
+ol.steps li{margin:6px 0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.toc a{font-size:.88rem;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 12px;text-decoration:none}
+footer{padding:28px 0 56px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
